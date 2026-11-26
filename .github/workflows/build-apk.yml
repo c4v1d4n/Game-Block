@@ -5,6 +5,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Layiheni yarat
@@ -26,3 +28,9 @@ jobs:
         with:
           name: KerpicBlok-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Release-e yukle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk KerpicBlok.apk
+          gh release create "v1.${{ github.run_number }}" KerpicBlok.apk --title "Kerpic Blok v1.${{ github.run_number }}" --notes "Telefona yukle ve qurasdir." --latest
