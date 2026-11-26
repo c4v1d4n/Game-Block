@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kart Oyunları</title>
+<style>
+/* VOICE: calm card table, tactile
+   IDEA: a felt card table with crisp printed cards
+   PICTURE: the layout of cards itself, filling the screen
+   COLOUR/TYPE: deep felt green, ivory cards, red/black ink; system serif-less UI
+   LAYOUT: slim top bar, full-height table */
+:root{--felt:#0d5236;--felt2:#0a3f2a;--ink:#f3f7f2;--acc:#ffd54a;--red:#c8202f;--blk:#17171d}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(130% 90% at 50% 10%,#13704a,var(--felt) 55%,var(--felt2));color:var(--ink);font:15px/1.3 system-ui,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.app{height:100%;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.bar{display:flex;align-items:center;gap:6px;padding:6px 6px 4px}
+.bar button{font:inherit;font-weight:600;font-size:15px;min-height:42px;min-width:42px;padding:0 10px;border:0;border-radius:12px;background:rgba(0,0,0,.25);color:var(--ink);cursor:pointer}
+.bar button:active{background:rgba(0,0,0,.4)}
+.bar button:disabled{opacity:.35}
+.stats{margin-inline-start:auto;text-align:end;font-size:13px;line-height:1.25;opacity:.9;white-space:nowrap}
+.stats b{font-size:15px}
+#table{position:relative;flex:1;overflow:hidden}
+.slot{position:absolute;left:0;top:0;width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.1);border:2px solid rgba(255,255,255,.18);background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.28);font-size:calc(var(--cw)*.42)}
+.card{position:absolute;left:0;top:0;width:var(--cw);height:var(--ch);border-radius:calc(var(--cw)*.1);transition:transform .2s ease;will-change:transform;cursor:pointer}
+.card .f{display:none;position:absolute;inset:0;border-radius:inherit;background:linear-gradient(#fffef9,#f2efe4);box-shadow:0 1px 2px rgba(0,0,0,.45);overflow:hidden}
+.card.up .f{display:block}
+.card .bk{position:absolute;inset:0;border-radius:inherit;border:2px solid #f6f1e2;background:repeating-linear-gradient(45deg,#8e1f2b 0 4px,#a92a37 4px 8px);box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.card.up .bk{display:none}
+.cr{position:absolute;left:7%;top:3%;font-weight:700;font-size:var(--fs);line-height:1;letter-spacing:-.5px;white-space:nowrap}
+.cr b{font-weight:400;margin-left:1px}
+.cc{position:absolute;left:0;right:0;bottom:8%;text-align:center;font-size:calc(var(--cw)*.55);line-height:1}
+.red{color:var(--red)}.blk{color:var(--blk)}
+.card.hint .f,.slot.hint{outline:3px solid var(--acc);outline-offset:-1px}
+.card.no{animation:no .3s}
+@keyframes no{25%{margin-left:-4px}75%{margin-left:4px}}
+.toast{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(0,0,0,.75);padding:10px 16px;border-radius:12px;font-size:15px;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none;z-index:3000}
+.toast.on{opacity:1}
+#auto{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:2500;display:none;font:inherit;font-weight:700;font-size:16px;min-height:46px;padding:0 20px;border:0;border-radius:14px;background:var(--acc);color:#2a2200}
+.ov{position:fixed;inset:0;background:rgba(3,25,16,.82);display:none;align-items:center;justify-content:center;z-index:4000;padding:16px}
+.ov.on{display:flex}
+.card2{background:#0b3d28;border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:24px 20px;width:min(100%,360px);text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+.card2 h2{margin:0 0 4px;font-size:28px}
+.card2 p{margin:0 0 16px;opacity:.85}
+.card2 h3{margin:18px 0 8px;font-size:16px;opacity:.8;font-weight:600;text-align:start}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.card2 button{font:inherit;font-weight:700;font-size:16px;min-height:48px;border:0;border-radius:14px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer;padding:0 10px}
+.card2 button.pri{background:var(--acc);color:#2a2200;width:100%}
+.logo{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
+.logo span{width:38px;height:54px;border-radius:6px;background:#fffef9;display:flex;align-items:flex-start;justify-content:flex-start;padding:4px;font-weight:700;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.logo span:nth-child(2){transform:translateY(-6px)}
+@media(prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <button id="menuBtn" aria-label="Menyu">☰</button>
+    <button id="undoBtn">↶ Geri</button>
+    <button id="hintBtn">İpucu</button>
+    <button id="newBtn">Yeni</button>
+    <div class="stats"><span id="gname"></span><br><b id="mv">0</b> gediş · <b id="tm">0:00</b></div>
+  </div>
+  <div id="table"><button id="auto">Avto tamamla</button><div class="toast" id="toast"></div></div>
+</div>
+<div class="ov on" id="menu"><div class="card2">
+  <div class="logo"><span class="blk">A♠</span><span class="red">K♥</span><span class="blk">Q♣</span></div>
+  <h2>Kart Oyunları</h2>
+  <p>Tək nəfərlik pasyans</p>
+  <button class="pri" id="resume" style="display:none;margin-bottom:4px">Davam et</button>
+  <h3>Kosinka (Klondike)</h3>
+  <div class="grid"><button data-g="k" data-o="1">1 kart</button><button data-g="k" data-o="3">3 kart</button></div>
+  <h3>Hörümçək (Spider)</h3>
+  <div class="grid"><button data-g="s" data-o="1">1 rəng</button><button data-g="s" data-o="2">2 rəng</button><button data-g="s" data-o="4">4 rəng</button></div>
+</div></div>
+<div class="ov" id="win"><div class="card2">
+  <h2>🏆 Qazandın!</h2><p id="winTxt"></p>
+  <button class="pri" id="winNew">Yeni oyun</button>
+  <div style="height:8px"></div><button id="winMenu" style="width:100%">Menyu</button>
+</div></div>
+<script>
+{
+const $=id=>document.getElementById(id);
+const SU=['♠','♥','♣','♦'],RN=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const red=c=>c.s%2===1;
+const table=$('table');
+let G=null,undo=[],els={},P={},M=null,timer=null,busy=false;
+
+/* ---------- setup ---------- */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function newGame(type,opt){
+ clearCards();
+ const deck=[];let id=0;
+ if(type==='k'){for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({id:id++,s,r,up:false})}
+ else{const suits=opt==1?[0]:opt==2?[0,1]:[0,1,2,3];for(let k=0;k<8;k++){const s=suits[k%suits.length];for(let r=1;r<=13;r++)deck.push({id:id++,s,r,up:false})}}
+ shuffle(deck);
+ G={type,opt:+opt,moves:0,time:0,started:false,won:false,stock:[],waste:[],found:[],tab:[]};
+ if(type==='k'){
+  G.found=[[],[],[],[]];G.tab=Array.from({length:7},()=>[]);
+  for(let i=0;i<7;i++)for(let j=0;j<=i;j++){const c=deck.pop();c.up=j===i;G.tab[i].push(c)}
+ }else{
+  G.found=Array.from({length:8},()=>[]);G.tab=Array.from({length:10},()=>[]);
+  for(let i=0;i<54;i++){const c=deck.pop();G.tab[i%10].push(c)}
+  G.tab.forEach(t=>t[t.length-1].up=true);
+ }
+ G.stock=deck;
+ undo=[];
+ $('gname').textContent=type==='k'?`Kosinka · ${opt} kart`:`Hörümçək · ${opt} rəng`;
+ $('menu').classList.remove('on');$('win').classList.remove('on');
+ render();save();tick();
+}
+function clearCards(){for(const k in els)els[k].remove();els={};P={};table.querySelectorAll('.slot').forEach(s=>s.remove())}
+
+/* ---------- piles ---------- */
+const get=ref=>ref.k==='stock'?G.stock:ref.k==='waste'?G.waste:ref.k==='found'?G.found[ref.i]:G.tab[ref.i];
+const same=(a,b)=>a.k===b.k&&a.i===b.i;
+function locate(id){
+ for(const k of ['stock','waste']){const i=G[k].findIndex(c=>c.id===id);if(i>=0)return{ref:{k},idx:i}}
+ for(const k of ['found','tab'])for(let p=0;p<G[k].length;p++){const i=G[k][p].findIndex(c=>c.id===id);if(i>=0)return{ref:{k,i:p},idx:i}}
+ return null;
+}
+function movable(ref,idx){
+ const pile=get(ref),c=pile[idx];if(!c||!c.up)return false;
+ if(ref.k==='stock')return false;
+ if(ref.k==='waste')return idx===pile.length-1;
+ if(ref.k==='found')return G.type==='k'&&idx===pile.length-1;
+ for(let j=idx;j<pile.length-1;j++){const a=pile[j],b=pile[j+1];
+  if(!b.up||b.r!==a.r-1)return false;
+  if(G.type==='k'?red(a)===red(b):a.s!==b.s)return false;}
+ return true;
+}
+function canDrop(seq,to){
+ const pile=get(to),top=pile[pile.length-1],c=seq[0];
+ if(to.k==='found'){if(G.type!=='k'||seq.length!==1)return false;return top?top.s===c.s&&c.r===top.r+1:c.r===1}
+ if(to.k!=='tab')return false;
+ if(G.type==='k')return top?top.up&&red(top)!==red(c)&&c.r===top.r-1:c.r===13;
+ return top?top.r===c.r+1:true;
+}
+
+/* ---------- actions ---------- */
+function snap(){undo.push(JSON.stringify({stock:G.stock,waste:G.waste,found:G.found,tab:G.tab,moves:G.moves}));if(undo.length>300)undo.shift()}
+function doUndo(){
+ if(!undo.length||busy)return;
+ const s=JSON.parse(undo.pop());Object.assign(G,s);G.won=false;render();save();
+}
+function flipTops(){G.tab.forEach(t=>{if(t.length&&!t[t.length-1].up)t[t.length-1].up=true})}
+function spiderCheck(){
+ let any=false;
+ G.tab.forEach(t=>{
+  if(t.length<13)return;const run=t.slice(-13);
+  if(run.every((c,k)=>c.up&&c.s===run[0].s&&c.r===13-k)){const f=G.found.findIndex(x=>!x.length);G.found[f]=t.splice(-13);any=true}
+ });
+ if(any){flipTops();toast('Bir dəst tamamlandı!')}
+}
+function start(){if(!G.started){G.started=true}}
+function doMove(from,idx,to){
+ snap();start();
+ const cards=get(from).splice(idx);get(to).push(...cards);G.moves++;
+ flipTops();if(G.type==='s')spiderCheck();
+ render();save();checkWin();
+}
+function stockTap(){
+ if(busy)return;
+ if(G.type==='k'){
+  if(!G.stock.length){if(!G.waste.length)return;snap();start();G.stock=G.waste.reverse().map(c=>(c.up=false,c));G.waste=[];G.moves++;render();save();return}
+  snap();start();const n=Math.min(G.opt,G.stock.length);
+  for(let i=0;i<n;i++){const c=G.stock.pop();c.up=true;G.waste.push(c)}
+  G.moves++;render();save();return;
+ }
+ if(!G.stock.length)return;
+ if(G.tab.some(t=>!t.length)){toast('Paylamaq üçün bütün sütunlarda kart olmalıdır');return}
+ snap();start();
+ G.tab.forEach(t=>{const c=G.stock.pop();c.up=true;t.push(c)});
+ G.moves++;spiderCheck();render();save();checkWin();
+}
+function targetsFor(from,idx){
+ const seq=get(from).slice(idx),out=[];
+ if(G.type==='k'&&seq.length===1&&from.k!=='found')for(let i=0;i<4;i++){const r={k:'found',i};if(canDrop(seq,r))out.push({to:r,score:100})}
+ G.tab.forEach((t,i)=>{const r={k:'tab',i};if(same(r,from)||!canDrop(seq,r))return;
+  let sc=10;
+  if(!t.length){if(from.k==='tab'&&idx===0)return;sc=1}
+  else if(G.type==='s'&&t[t.length-1].s===seq[0].s)sc=20;
+  out.push({to:r,score:sc})});
+ return out.sort((a,b)=>b.score-a.score);
+}
+function autoMove(from,idx){
+ const t=targetsFor(from,idx);
+ if(t.length)return doMove(from,idx,t[0].to);
+ get(from).slice(idx).forEach(c=>{const e=els[c.id];e.classList.remove('no');void e.offsetWidth;e.classList.add('no')});
+}
+function checkWin(){
+ const done=G.type==='k'?G.found.reduce((a,f)=>a+f.length,0)===52:G.found.every(f=>f.length);
+ if(done&&!G.won){G.won=true;save();setTimeout(()=>{$('winTxt').textContent=`${G.moves} gediş · ${fmt(G.time)}`;$('win').classList.add('on')},500)}
+ updateAuto();
+}
+function updateAuto(){
+ const ok=G.type==='k'&&!G.won&&!G.stock.length&&!G.waste.length&&G.tab.every(t=>t.every(c=>c.up))&&!busy;
+ $('auto').style.display=ok?'block':'none';
+}
+function autoComplete(){
+ busy=true;snap();updateAuto();
+ const step=()=>{
+  let best=null;
+  G.tab.forEach((t,i)=>{const c=t[t.length-1];if(!c)return;for(let f=0;f<4;f++)if(canDrop([c],{k:'found',i:f})&&(!best||c.r<best.c.r))best={c,i,f}});
+  if(!best){busy=false;render();save();checkWin();return}
+  G.found[best.f].push(G.tab[best.i].pop());G.moves++;render();
+  setTimeout(step,70);
+ };
+ step();
+}
+function hint(){
+ clearHint();
+ const moves=[];
+ const srcs=[];
+ if(G.type==='k'&&G.waste.length)srcs.push({ref:{k:'waste'},idx:G.waste.length-1});
+ G.tab.forEach((t,i)=>{for(let j=0;j<t.length;j++)if(movable({k:'tab',i},j)){srcs.push({ref:{k:'tab',i},idx:j});if(G.type==='k')break}});
+ srcs.forEach(s=>targetsFor(s.ref,s.idx).forEach(t=>{
+  let sc=t.score;const p=get(s.ref);
+  if(s.ref.k==='tab'&&s.idx>0&&!p[s.idx-1].up)sc+=50;
+  if(G.type==='s'&&s.ref.k==='tab'&&s.idx>0&&p[s.idx-1].up&&p[s.idx-1].s===p[s.idx].s&&p[s.idx-1].r===p[s.idx].r+1)sc-=30;
+  if(G.type==='k'&&s.ref.k==='tab'&&t.to.k==='tab'&&s.idx>0&&p[s.idx-1].up&&!get(t.to).length)sc-=20;
+  moves.push({...s,...t,sc})}));
+ moves.sort((a,b)=>b.sc-a.sc);
+ const m=moves.find(x=>x.sc>0);
+ if(m){
+  get(m.ref).slice(m.idx).forEach(c=>els[c.id].classList.add('hint'));
+  const tp=get(m.to);if(tp.length)els[tp[tp.length-1].id].classList.add('hint');else slotEl(m.to)?.classList.add('hint');
+ }else if(G.stock.length||(G.type==='k'&&G.waste.length)){
+  if(G.stock.length)els[G.stock[G.stock.length-1].id].classList.add('hint');else slotEl({k:'stock'})?.classList.add('hint');
+  toast(G.type==='k'?'Kolodadan kart aç':'Yeni kartları payla');
+ }else toast('Gediş qalmayıb — geri al və ya yeni oyun başla');
+ setTimeout(clearHint,1600);
+}
+function clearHint(){table.querySelectorAll('.hint').forEach(e=>e.classList.remove('hint'))}
+
+/* ---------- layout & render ---------- */
+function metrics(){
+ const W=table.clientWidth,H=table.clientHeight,n=G.type==='k'?7:10,g=G.type==='k'?6:3;
+ let cw=(W-g*(n+1))/n;cw=Math.min(cw,96,(H*0.2)/1.4);const ch=cw*1.4;
+ const off=(W-(cw*n+g*(n-1)))/2;
+ const colX=i=>off+i*(cw+g);
+ return{W,H,n,g,cw,ch,colX,y0:ch+g+12,top:g};
+}
+function slotEl(ref){return table.querySelector(`.slot[data-k="${ref.k}"][data-i="${ref.i??''}"]`)}
+function ensureSlot(ref,x,y,label){
+ let s=slotEl(ref);
+ if(!s){s=document.createElement('div');s.className='slot';s.dataset.k=ref.k;s.dataset.i=ref.i??'';table.appendChild(s)}
+ s.textContent=label||'';s.style.transform=`translate(${x}px,${y}px)`;return s;
+}
+function cardEl(c){
+ let e=els[c.id];
+ if(!e){e=document.createElement('div');e.className='card '+(red(c)?'red':'blk');e.dataset.id=c.id;
+  e.innerHTML=`<div class="f"><span class="cr">${RN[c.r]}<b>${SU[c.s]}</b></span><span class="cc">${c.r>10?RN[c.r]:SU[c.s]}</span></div><div class="bk"></div>`;
+  table.appendChild(e);els[c.id]=e}
+ return e;
+}
+function place(c,x,y,z){const e=cardEl(c);e.classList.toggle('up',c.up);e.style.transition='';e.style.transform=`translate(${x}px,${y}px)`;e.style.zIndex=z;P[c.id]={x,y}}
+function render(){
+ if(!G)return;
+ M=metrics();const {cw,ch,colX,y0,top,H}=M;
+ table.style.setProperty('--cw',cw+'px');table.style.setProperty('--ch',ch+'px');
+ table.style.setProperty('--fs',Math.max(11,cw*(G.type==='k'?.27:.33))+'px');
+ if(G.type==='k'){
+  ensureSlot({k:'stock'},colX(0),top,G.stock.length?'':'↻');
+  G.stock.forEach((c,j)=>place(c,colX(0),top,10+j));
+  ensureSlot({k:'waste'},colX(1),top);
+  const vis=G.opt===3?Math.min(3,G.waste.length):1;
+  G.waste.forEach((c,j)=>{const k=j-(G.waste.length-vis);place(c,colX(1)+(k>0?k*cw*.3:0),top,10+j)});
+  for(let f=0;f<4;f++){ensureSlot({k:'found',i:f},colX(3+f),top,'A');G.found[f].forEach((c,j)=>place(c,colX(3+f),top,10+j))}
+ }else{
+  for(let f=0;f<8;f++){ensureSlot({k:'found',i:f},colX(f),top);G.found[f].forEach((c,j)=>place(c,colX(f),top,10+j))}
+  ensureSlot({k:'stock'},colX(9),top,G.stock.length?'':'·');
+  G.stock.forEach((c,j)=>{const d=Math.floor(j/10);place(c,colX(9)-d*cw*.16,top,10+j)});
+ }
+ G.tab.forEach((t,i)=>{
+  ensureSlot({k:'tab',i},colX(i),y0,G.type==='k'?'K':'');
+  const dn=ch*.13,up=ch*(G.type==='k'?.3:.27);
+  let sum=0;for(let j=0;j<t.length-1;j++)sum+=t[j].up?up:dn;
+  const avail=H-y0-ch-6,f=sum>avail&&sum>0?avail/sum:1;
+  let y=y0;t.forEach((c,j)=>{place(c,colX(i),y,100+j);y+=(c.up?up:dn)*f});
+ });
+ $('mv').textContent=G.moves;$('undoBtn').disabled=!undo.length;
+ updateAuto();
+}
+
+/* ---------- input ---------- */
+let drag=null;
+table.addEventListener('pointerdown',e=>{
+ if(!G||busy||G.won)return;
+ if(e.target.id==='auto')return;
+ clearHint();
+ const el=e.target.closest('.card');
+ if(!el){const s=e.target.closest('.slot');if(s&&s.dataset.k==='stock')drag={stock:true};return}
+ const loc=locate(+el.dataset.id);if(!loc)return;
+ if(loc.ref.k==='stock'){drag={stock:true};return}
+ if(!movable(loc.ref,loc.idx))return;
+ const ids=get(loc.ref).slice(loc.idx).map(c=>c.id);
+ drag={...loc,ids,sx:e.clientX,sy:e.clientY,moved:false};
+ e.preventDefault();
+});
+window.addEventListener('pointermove',e=>{
+ if(!drag||drag.stock)return;
+ const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+ if(!drag.moved&&Math.hypot(dx,dy)<7)return;
+ drag.moved=true;drag.dx=dx;drag.dy=dy;
+ drag.ids.forEach((id,k)=>{const el=els[id],p=P[id];el.style.transition='none';el.style.zIndex=2000+k;el.style.transform=`translate(${p.x+dx}px,${p.y+dy}px)`});
+});
+window.addEventListener('pointerup',()=>{
+ if(!drag)return;const d=drag;drag=null;
+ if(d.stock){stockTap();return}
+ if(!d.moved){autoMove(d.ref,d.idx);return}
+ const p=P[d.ids[0]],x=p.x+d.dx,y=p.y+d.dy,{cw,ch}=M;
+ const seq=get(d.ref).slice(d.idx);let best=null,bestA=0;
+ const cands=G.tab.map((_,i)=>({k:'tab',i}));if(G.type==='k')for(let i=0;i<4;i++)cands.push({k:'found',i});
+ cands.forEach(r=>{
+  if(same(r,d.ref)||!canDrop(seq,r))return;
+  const pile=get(r);let rx,ry;
+  if(pile.length){const q=P[pile[pile.length-1].id];rx=q.x;ry=q.y}else{const s=slotEl(r);const m=/translate\(([-\d.]+)px,\s*([-\d.]+)px/.exec(s.style.transform);rx=+m[1];ry=+m[2]}
+  const ox=Math.max(0,Math.min(x+cw,rx+cw)-Math.max(x,rx)),oy=Math.max(0,Math.min(y+ch,ry+ch)-Math.max(y,ry)),a=ox*oy;
+  if(a>bestA){bestA=a;best=r}
+ });
+ if(best)doMove(d.ref,d.idx,best);else render();
+});
+window.addEventListener('pointercancel',()=>{if(drag){drag=null;render()}});
+
+/* ---------- misc ---------- */
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function tick(){$('tm').textContent=G?fmt(G.time):'0:00'}
+setInterval(()=>{if(G&&G.started&&!G.won&&!document.hidden&&!$('menu').classList.contains('on')){G.time++;tick();if(G.time%5===0)save()}},1000);
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),1800)}
+function save(){try{localStorage.setItem('kart-save',JSON.stringify(G))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('kart-save'));if(s&&!s.won&&s.tab)return s}catch(e){}return null}
+function showMenu(){$('resume').style.display=(G&&!G.won)||load()?'':'none';$('menu').classList.add('on')}
+$('menu').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.id==='resume'){if(!G){const s=load();if(!s)return;clearCards();G=s;undo=[];$('gname').textContent=G.type==='k'?`Kosinka · ${G.opt} kart`:`Hörümçək · ${G.opt} rəng`;render();tick()}$('menu').classList.remove('on');return}
+ if(b.dataset.g)newGame(b.dataset.g,b.dataset.o);
+});
+$('menuBtn').addEventListener('click',showMenu);
+$('newBtn').addEventListener('click',()=>G&&newGame(G.type,G.opt));
+$('undoBtn').addEventListener('click',doUndo);
+$('hintBtn').addEventListener('click',()=>G&&!busy&&hint());
+$('auto').addEventListener('click',autoComplete);
+$('winNew').addEventListener('click',()=>newGame(G.type,G.opt));
+$('winMenu').addEventListener('click',()=>{$('win').classList.remove('on');showMenu()});
+const ro=new ResizeObserver(()=>render());ro.observe(table);
+showMenu();
+}
+</script>
+</body>
+</html>

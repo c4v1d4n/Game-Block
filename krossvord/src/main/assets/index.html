@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Krossvord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: nostalgic newspaper puzzle page
+   IDEA: the crossword corner of an old weekly paper
+   PICTURE: the free-form grid itself, black ink on newsprint
+   COLOUR/TYPE: newsprint ivory, ink black, one red pencil accent; Noto Serif
+   LAYOUT: masthead, grid, active clue + keyboard, two clue columns */
+:root{--paper:#efe9d8;--paper2:#e6dfca;--ink:#1b1a17;--mute:#5d584c;--sel:#f5d76e;--word:#f8eab0;--bad:#c4302b;--rev:#2d5ea8}
+*{box-sizing:border-box;min-width:0}
+html{background:var(--paper)}
+body{margin:0;color:var(--ink);font:16px/1.45 "Noto Serif",Georgia,serif;background:radial-gradient(120% 70% at 50% 0%,#f5f0e1,var(--paper) 60%,var(--paper2));min-height:100vh;-webkit-tap-highlight-color:transparent}
+.page{max-width:760px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 12px 0}
+.mast{text-align:center;border-bottom:3px double var(--ink);padding-bottom:6px;margin-bottom:12px}
+.mast h1{margin:0;font-weight:900;font-size:clamp(32px,9vw,48px);letter-spacing:1px;line-height:1.05}
+.mast .sub{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);border-top:1px solid var(--ink);margin-top:6px;padding-top:3px}
+.tools{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.tools button,.ov button{font:inherit;font-size:15px;font-weight:700;min-height:44px;padding:0 14px;border:1.5px solid var(--ink);border-radius:4px;background:transparent;color:var(--ink);cursor:pointer}
+.tools button:active{background:var(--ink);color:var(--paper)}
+.tools button:focus-visible,.key:focus-visible{outline:3px solid var(--rev);outline-offset:2px}
+.gridwrap{display:flex;justify-content:center;margin-bottom:12px}
+.grid{display:grid;user-select:none;-webkit-user-select:none}
+.cell{position:relative;width:var(--cs);height:var(--cs)}
+.cell.on{background:#fffdf6;outline:1.5px solid var(--ink);outline-offset:-.75px;cursor:pointer}
+.cell.word{background:var(--word)}
+.cell.sel{background:var(--sel)}
+.cell i{position:absolute;left:2px;top:0;font-style:normal;font-size:max(8px,calc(var(--cs)*.27));line-height:1.1;color:var(--ink)}
+.cell b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--cs)*.56);font-weight:700;padding-top:calc(var(--cs)*.1)}
+.cell.bad b{color:var(--bad)}
+.cell.rev b{color:var(--rev)}
+.dock{position:sticky;bottom:0;background:linear-gradient(transparent,var(--paper) 10px);padding:10px 0 max(8px,env(safe-area-inset-bottom));z-index:5}
+.clue{display:flex;align-items:center;gap:6px;background:var(--ink);color:var(--paper);border-radius:4px;padding:6px 6px 6px 12px;margin-bottom:6px;min-height:48px}
+.clue span{flex:1;font-size:15px;line-height:1.3}
+.clue button{font:inherit;color:var(--paper);background:transparent;border:0;min-width:40px;min-height:40px;font-size:20px;cursor:pointer}
+.kb{display:flex;flex-direction:column;gap:5px}
+.kb div{display:flex;gap:4px;justify-content:center}
+.key{flex:1;max-width:44px;min-height:46px;border:0;border-radius:5px;background:#fffdf6;color:var(--ink);font:700 17px "Noto Serif",serif;box-shadow:0 1.5px 0 rgba(0,0,0,.35);cursor:pointer;padding:0}
+.key:active{background:var(--sel)}
+.key.wide{max-width:64px;flex:1.5;font-size:15px}
+.clues{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;border-top:3px double var(--ink);padding:12px 0 40px}
+.clues h2{margin:0 0 6px;font-size:18px;font-weight:900;text-transform:none;border-bottom:1px solid var(--ink)}
+.clues ol{list-style:none;margin:0;padding:0;font-size:15px}
+.clues li{padding:3px 4px;border-radius:3px;cursor:pointer}
+.clues li b{margin-inline-end:4px}
+.clues li.cur{background:var(--word)}
+.clues li.done{color:var(--mute);text-decoration:line-through;text-decoration-thickness:1px}
+.note{font-size:13px;color:var(--mute);text-align:center;margin:0 0 10px}
+.ov{position:fixed;inset:0;background:rgba(27,26,23,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.ov.on{display:flex}
+.ov .box{background:var(--paper);border:2px solid var(--ink);padding:24px;max-width:340px;text-align:center;box-shadow:6px 6px 0 var(--ink)}
+.ov h2{margin:0 0 6px;font-size:28px;font-weight:900}
+.ov p{margin:0 0 16px}
+@media(max-width:560px){.clues{grid-template-columns:1fr;gap:12px}}
+@media(min-width:900px){.dock{position:static}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="mast">
+    <h1>KROSSVORD</h1>
+    <div class="sub"><span id="no">№ 1</span><span id="prog">0 / 0 söz</span></div>
+  </header>
+  <div class="tools">
+    <button id="check">Yoxla</button>
+    <button id="revL">Hərfi aç</button>
+    <button id="revW">Sözü aç</button>
+    <button id="newP">Yeni krossvord</button>
+  </div>
+  <div class="gridwrap"><div class="grid" id="grid"></div></div>
+  <p class="note">Xanaya toxun, hərfləri yaz. Eyni xanaya bir də toxunsan, istiqamət dəyişir.</p>
+  <div class="dock">
+    <div class="clue"><button id="prev" aria-label="Əvvəlki sual">‹</button><span id="clueTxt"></span><button id="next" aria-label="Növbəti sual">›</button></div>
+    <div class="kb" id="kb"></div>
+  </div>
+  <section class="clues">
+    <div><h2>Üfüqi</h2><ol id="across"></ol></div>
+    <div><h2>Şaquli</h2><ol id="down"></ol></div>
+  </section>
+</div>
+<div class="ov" id="done"><div class="box"><h2>Təbriklər!</h2><p id="doneTxt"></p><button id="doneNew">Yeni krossvord</button></div></div>
+<script>
+{
+const BANK=`BAKI|Azərbaycanın paytaxtı
+XƏZƏR|Dünyanın ən böyük gölü
+KÜR|Qafqazın ən uzun çayı
+ARAZ|Cənub sərhədi boyunca axan çay
+ŞAHDAĞ|Böyük Qafqazda qarlı zirvə və xizək kurortu
+GƏNCƏ|Nizaminin doğulduğu şəhər
+NİZAMİ|«Xəmsə»nin müəllifi
+FÜZULİ|«Leyli və Məcnun» poemasının müəllifi
+MUĞAM|Azərbaycanın klassik musiqi janrı
+TAR|Muğam üçlüyünün simli aləti
+KAMANÇA|Yayla çalınan simli milli alət
+BALABAN|Tut ağacından düzəldilən nəfəsli alət
+NAĞARA|Toylarda çalınan zərb aləti
+ŞƏKİ|Xan sarayı ilə məşhur şəhər
+QUBA|Almaları ilə məşhur şimal rayonu
+LƏNKƏRAN|Çayı və sitrus meyvələri ilə tanınan cənub şəhəri
+NAXÇIVAN|Muxtar respublika
+PLOV|Düyüdən hazırlanan süfrə şahı
+DOLMA|Yarpağa və ya tərəvəzə doldurulan yemək
+DÜŞBƏRƏ|Kiçik xəmir bükmələri olan şorba
+QUTAB|Nazik xəmirə göyərti və ya ət qoyulan yemək
+PAXLAVA|Romb şəkilli Novruz şirniyyatı
+ŞƏKƏRBURA|Naxışlı ağızlı Novruz şirniyyatı
+NOVRUZ|Yazın gəlişi bayramı
+XALÇA|Naxışlı toxunma döşəmə örtüyü
+KƏLAĞAYI|Şəkidə toxunan ipək baş örtüyü
+ARMUDU|Çay stəkanının ənənəvi forması
+NAR|Göyçayın məşhur qırmızı dənəli meyvəsi
+ALMA|Nyutonun başına düşən meyvə
+ÜZÜM|Salxım-salxım yetişən meyvə
+QOVUN|Sarı qabıqlı, ətirli bostan meyvəsi
+QARPIZ|İçi qırmızı, iri bostan meyvəsi
+ƏNCİR|Abşeronda bitən şirin yay meyvəsi
+FINDIQ|Zaqatala və Qəbələdə çox becərilən qoz meyvəsi
+ŞAHMAT|64 xanalı lövhədə oynanan oyun
+NƏRD|Zər atılan stolüstü oyun
+QAPI|Evə giriş yeri
+PƏNCƏRƏ|Otağa işıq düşən yer
+KİTAB|Səhifələrdən ibarət oxu vasitəsi
+QƏLƏM|Yazı aləti
+DƏFTƏR|Şagirdin yazı vərəqləri
+MƏKTƏB|Uşaqların təhsil aldığı yer
+MÜƏLLİM|Dərs deyən şəxs
+HƏKİM|Xəstəni müalicə edən
+ÇÖRƏK|Süfrənin müqəddəs neməti
+TƏNDİR|Lavaş bişirilən torpaq soba
+ODLAR|Azərbaycan — ... Yurdu
+GÜNƏŞ|Gündüz səmanı işıqlandıran ulduz
+ULDUZ|Gecə səmasında parlayan işıq
+BULUD|Göydə su buxarı yığını
+YAĞIŞ|Buluddan damla-damla düşən su
+QAR|Qışda yağan ağ yağıntı
+KÜLƏK|Havanın axını
+XƏZRİ|Bakının güclü şimal küləyi
+GİLAVAR|Bakının isti cənub küləyi
+DƏNİZ|Böyük duzlu su hövzəsi
+MEŞƏ|Sıx ağaclıq sahə
+ÇİÇƏK|Bitkinin rəngli, ətirli hissəsi
+XARIBÜLBÜL|Şuşanın simvolu olan çiçək
+ŞUŞA|Qarabağın tacı adlanan şəhər
+BÜLBÜL|Gecələr gözəl oxuyan quş
+QARTAL|Quşların şahı
+ASLAN|Heyvanlar şahı
+CEYRAN|Zərif çöl heyvanı, Şirvanın simvolu
+İLAN|Sürünən, bəzən zəhərli heyvan
+BALIQ|Üzgəcli su canlısı
+NƏRƏ|Qara kürü verən Xəzər balığı
+KÜRÜ|Balığın yumurtası; qarası çox qiymətlidir
+NEFT|«Qara qızıl»
+QIZIL|Qiymətli sarı metal
+GÜMÜŞ|Qiymətli ağ metal
+DƏMİR|Paslanan metal
+HƏRF|Əlifbanın vahidi
+ANA|Vətən də ona bənzədilir
+ATA|Ailənin başçısı
+BABA|Atanın və ya ananın atası
+NƏNƏ|Atanın və ya ananın anası
+QARDAŞ|Eyni valideyndən olan oğlan
+BACI|Qız qardaş
+DOST|Sirdaş, yaxın adam
+OTAQ|Evin bölmələrindən biri
+SAAT|Vaxtı göstərən cihaz
+HƏFTƏ|Yeddi gün
+QIŞ|İlin ən soyuq fəsli
+PAYIZ|Yarpaq tökümü fəsli
+YAZ|Novruzla gələn fəsil
+SƏHƏR|Günün başlanğıcı
+AXŞAM|Gün batandan sonrakı vaxt
+ŞƏHƏR|Böyük yaşayış məntəqəsi
+KƏND|Kiçik yaşayış məntəqəsi
+KÖRPÜ|Çayın üstündən keçid
+QATAR|Relslə gedən nəqliyyat
+GƏMİ|Dənizdə üzən nəqliyyat
+TƏYYARƏ|Göydə uçan nəqliyyat
+QALA|İçərişəhərdəki Qız ...
+QOBUSTAN|Qayaüstü təsvirləri ilə məşhur yer
+YANARDAĞ|Abşeronda sönməyən odlu yamac
+ATƏŞGAH|Suraxanıdakı qədim od məbədi
+ÜZEYİR|«Koroğlu» operasının müəllifi Hacıbəyli
+KOROĞLU|Dastan qəhrəmanı, Qıratın sahibi
+QORQUD|«Kitabi-Dədə ...»
+SABİR|«Hophopnamə»nin müəllifi
+VAQİF|Qarabağ xanının vəziri olmuş şair
+NATƏVAN|«Xan qızı» adlanan şairə
+ƏLİFBA|Hərflər sistemi
+RƏQƏM|Ədədi yazmaq üçün işarə
+SIFIR|Heç nə ifadə edən ədəd
+YÜZ|On dəfə on
+MİN|On dəfə yüz
+QIRMIZI|Bayrağımızın orta zolağının rəngi
+MAVİ|Bayrağımızın yuxarı zolağının rəngi
+YAŞIL|Bayrağımızın aşağı zolağının rəngi
+QARA|Gecənin rəngi
+SARI|Limonun rəngi
+LİMON|Çaya qatılan turş sarı meyvə
+BAL|Arının hazırladığı şirin məhsul
+ARI|Bal verən həşərat
+SÜD|İnəyin verdiyi ağ içki
+PENDİR|Süddən hazırlanan duzlu ağ məhsul
+QATIQ|Dovğanın əsası olan turş süd məhsulu
+DOVĞA|Qatıqla bişən göyərtili şorba
+KABAB|Şişdə bişən ət
+DÜYÜ|Plovun əsası
+DUZ|Xörəyə dad verən ağ maddə
+BİBƏR|Acı tərəvəz
+SOĞAN|Doğrayanda göz yaşardan tərəvəz
+KARTOF|Yeraltı yumru tərəvəz
+POMİDOR|Qırmızı, sulu tərəvəz
+XİYAR|Yaşıl uzunsov tərəvəz
+QULAQ|Eşitmə orqanı
+BURUN|İybilmə orqanı
+AYAQ|Yeriyən üzv
+ÜRƏK|Qanı hərəkətə gətirən orqan
+SAÇ|Başda bitən tük
+DİŞ|Çeynəmək üçün ağızdakı sümük
+QAŞ|Gözün üstündəki tük
+BARMAQ|Əlin beş hissəsindən biri
+MAHNI|Oxunan musiqi əsəri
+RƏQS|Musiqi altında hərəkət
+YALLI|Əl-ələ tutub oynanan dairəvi xalq rəqsi
+ŞEİR|Qafiyəli bədii əsər
+DASTAN|Böyük xalq epik əsəri
+NAĞIL|«Biri var idi, biri yox idi» ilə başlayan
+TAPMACA|Cavabı tapılmalı sual
+LAYLA|Körpəni yatırmaq üçün oxunan mahnı
+SƏMƏNİ|Novruzda cücərdilən buğda
+BUĞDA|Çörək unu üçün dənli bitki
+KOSA|Keçəllə birgə Novruz personajı
+KEÇƏL|Kosa ilə birgə Novruz personajı
+TONQAL|Çərşənbə axşamları üstündən tullanılan od
+ÇİNAR|Uzunömürlü iri yarpaqlı ağac
+PALID|Möhkəm oduncaqlı meşə ağacı
+SƏRV|Şam kimi düz, həmişəyaşıl ağac
+QIZILGÜL|Tikanlı, ətirli çiçək
+LALƏ|Yazda açan qırmızı çöl çiçəyi
+DƏVƏ|Səhra gəmisi
+CANAVAR|Boz qurd
+TÜLKÜ|Hiyləgər qırmızı heyvan
+DOVŞAN|Uzunqulaq qorxaq heyvan
+AYI|Qışı yuxuda keçirən iri heyvan
+XORUZ|Səhər banlayan quş
+LEYLƏK|Damda yuva quran uzunayaq quş
+QARĞA|Qara tüklü, «qar-qar» deyən quş
+SİNƏMA|Film nümayiş olunan yer
+TEATR|Tamaşa göstərilən yer
+MUZEY|Eksponatların saxlandığı yer
+BAZAR|Alış-veriş meydanı
+ÇƏTİR|Yağışdan qoruyan əşya
+AYNA|Üzə baxmaq üçün şüşə
+YASTIQ|Başın altına qoyulan
+YORĞAN|Yatanda üstə örtülən
+SAMOVAR|Çay qaynadılan ənənəvi qab
+QAZAN|Plov bişirilən qab
+DƏSMAL|Əl-üz silmək üçün parça
+XƏRİTƏ|Yer üzünün kağız təsviri
+PLANET|Günəş ətrafında fırlanan göy cismi
+KAİNAT|Bütün dünyalar, kosmos
+OKEAN|Ən böyük su hövzəsi
+SƏHRA|Qumlu, susuz geniş ərazi
+ADA|Hər tərəfdən su ilə əhatə olunmuş quru
+ÇAYDAN|Su qaynadılan qab
+ŞƏLALƏ|Yüksəklikdən tökülən su
+BULAQ|Yerdən çıxan təmiz su mənbəyi`.split('\n').map(l=>{const [w,c]=l.split('|');return{w:[...w.trim()],c:c.trim()}}).filter(o=>o.w.length>=3&&o.w.length<=11);
+
+const ALPHA=[...'ABCÇDEƏFGĞHXIİJKQLMNOÖPRSŞTUÜVYZ'];
+const $=id=>document.getElementById(id);
+const S=15;
+let P=null,user={},cur={r:0,c:0,dir:'a'},revealed=new Set(),bad=new Set(),num=1;
+
+/* ---------- generator ---------- */
+function gen(){
+ let best=null;
+ for(let t=0;t<30;t++){
+  const g={},words=[],bank=BANK.slice().sort(()=>Math.random()-.5);
+  const first=bank.find(o=>o.w.length>=7&&o.w.length<=9);
+  const r0=S>>1,c0=(S-first.w.length)>>1;
+  put(g,words,first,r0,c0,'a');
+  for(let pass=0;pass<2;pass++)for(const o of bank){
+   if(words.length>=24)break;
+   if(words.some(x=>x.o===o))continue;
+   let opts=[];
+   for(const key in g){const [r,c]=key.split(',').map(Number);
+    o.w.forEach((ch,i)=>{if(ch!==g[key])return;
+     for(const dir of ['a','d']){const R=dir==='d'?r-i:r,C=dir==='a'?c-i:c;const x=fits(g,o.w,R,C,dir);if(x>0)opts.push({R,C,dir,x})}})}
+   if(!opts.length)continue;
+   opts.sort((a,b)=>b.x-a.x||Math.random()-.5);const p=opts[0];put(g,words,o,p.R,p.C,p.dir);
+  }
+  const score=words.length*10+words.reduce((a,w)=>a+w.o.w.length,0)*.2;
+  if(!best||score>best.score)best={g,words,score};
+ }
+ // crop
+ let r1=S,c1=S,r2=0,c2=0;
+ for(const k in best.g){const [r,c]=k.split(',').map(Number);r1=Math.min(r1,r);c1=Math.min(c1,c);r2=Math.max(r2,r);c2=Math.max(c2,c)}
+ const words=best.words.map(w=>({w:w.o.w,c:w.o.c,r:w.r-r1,col:w.c-c1,dir:w.dir}));
+ const sol={};for(const k in best.g){const [r,c]=k.split(',').map(Number);sol[(r-r1)+','+(c-c1)]=best.g[k]}
+ // numbering
+ const starts=[...new Set(words.map(w=>w.r+','+w.col))].map(k=>k.split(',').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+ const nums={};starts.forEach((s,i)=>nums[s[0]+','+s[1]]=i+1);
+ words.forEach(w=>w.n=nums[w.r+','+w.col]);
+ return{rows:r2-r1+1,cols:c2-c1+1,sol,words,nums};
+}
+function fits(g,w,r,c,dir){
+ const dr=dir==='d'?1:0,dc=dir==='a'?1:0;let x=0;
+ if(r<0||c<0||r+dr*(w.length-1)>=S||c+dc*(w.length-1)>=S)return -1;
+ if(g[(r-dr)+','+(c-dc)]||g[(r+dr*w.length)+','+(c+dc*w.length)])return -1;
+ for(let i=0;i<w.length;i++){
+  const R=r+dr*i,C=c+dc*i,v=g[R+','+C];
+  if(v){if(v!==w[i])return -1;x++}
+  else if(g[(R+dc)+','+(C+dr)]||g[(R-dc)+','+(C-dr)])return -1;
+ }
+ return x<w.length?x:-1;
+}
+function put(g,words,o,r,c,dir){const dr=dir==='d'?1:0,dc=dir==='a'?1:0;o.w.forEach((ch,i)=>g[(r+dr*i)+','+(c+dc*i)]=ch);words.push({o,r,c,dir})}
+
+/* ---------- helpers ---------- */
+const key=(r,c)=>r+','+c;
+const cellsOf=w=>w.w.map((_,i)=>w.dir==='a'?key(w.r,w.col+i):key(w.r+i,w.col));
+const wordAt=(r,c,dir)=>P.words.find(w=>w.dir===dir&&cellsOf(w).includes(key(r,c)));
+const curWord=()=>wordAt(cur.r,cur.c,cur.dir);
+const ordered=()=>[...P.words.filter(w=>w.dir==='a'),...P.words.filter(w=>w.dir==='d')].sort((a,b)=>(a.dir===b.dir?a.n-b.n:a.dir==='a'?-1:1));
+const solved=w=>cellsOf(w).every(k=>user[k]===P.sol[k]);
+
+/* ---------- render ---------- */
+function build(){
+ const g=$('grid');
+ const cs=Math.floor(Math.min(40,(Math.min(innerWidth,760)-28)/P.cols));
+ g.style.setProperty('--cs',cs+'px');
+ g.style.gridTemplateColumns=`repeat(${P.cols},${cs}px)`;
+ let h='';
+ for(let r=0;r<P.rows;r++)for(let c=0;c<P.cols;c++){const k=key(r,c);
+  h+=P.sol[k]?`<div class="cell on" data-k="${k}">${P.nums[k]?`<i>${P.nums[k]}</i>`:''}<b></b></div>`:'<div class="cell"></div>'}
+ g.innerHTML=h;
+ const li=w=>`<li data-n="${w.n}" data-d="${w.dir}"><b>${w.n}.</b>${esc(w.c)} <span style="color:var(--mute)">(${w.w.length})</span></li>`;
+ $('across').innerHTML=P.words.filter(w=>w.dir==='a').sort((a,b)=>a.n-b.n).map(li).join('');
+ $('down').innerHTML=P.words.filter(w=>w.dir==='d').sort((a,b)=>a.n-b.n).map(li).join('');
+ $('no').textContent='№ '+num;
+ paint();
+}
+function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function paint(){
+ const w=curWord(),wc=new Set(w?cellsOf(w):[]);
+ document.querySelectorAll('.cell.on').forEach(el=>{const k=el.dataset.k;
+  el.classList.toggle('word',wc.has(k));el.classList.toggle('sel',k===key(cur.r,cur.c));
+  el.classList.toggle('bad',bad.has(k));el.classList.toggle('rev',revealed.has(k));
+  el.querySelector('b').textContent=user[k]||''});
+ $('clueTxt').textContent=w?`${w.n} ${w.dir==='a'?'üfüqi':'şaquli'}: ${w.c} (${w.w.length})`:'';
+ document.querySelectorAll('.clues li').forEach(li=>{const x=P.words.find(q=>q.n==li.dataset.n&&q.dir===li.dataset.d);
+  li.classList.toggle('cur',x===w);li.classList.toggle('done',solved(x))});
+ const s=P.words.filter(solved).length;$('prog').textContent=`${s} / ${P.words.length} söz`;
+}
+function save(){try{localStorage.setItem('kv-state',JSON.stringify({P,user,revealed:[...revealed],num}))}catch(e){}}
+
+/* ---------- actions ---------- */
+function select(r,c){
+ if(!P.sol[key(r,c)])return;
+ if(cur.r===r&&cur.c===c){const o=cur.dir==='a'?'d':'a';if(wordAt(r,c,o))cur.dir=o}
+ else{cur.r=r;cur.c=c;if(!wordAt(r,c,cur.dir))cur.dir=cur.dir==='a'?'d':'a'}
+ paint();
+}
+function step(d){const w=curWord();if(!w)return;const cs=cellsOf(w),i=cs.indexOf(key(cur.r,cur.c))+d;if(i>=0&&i<cs.length){[cur.r,cur.c]=cs[i].split(',').map(Number)}}
+function type(ch){
+ const k=key(cur.r,cur.c);if(revealed.has(k)){step(1);paint();return}
+ user[k]=ch;bad.delete(k);step(1);paint();save();finishCheck();
+}
+function back(){
+ const k=key(cur.r,cur.c);
+ if(user[k]&&!revealed.has(k)){delete user[k];bad.delete(k)}
+ else{step(-1);const k2=key(cur.r,cur.c);if(!revealed.has(k2)){delete user[k2];bad.delete(k2)}}
+ paint();save();
+}
+function jump(d){const list=ordered(),w=curWord();let i=list.indexOf(w)+d;i=(i+list.length)%list.length;const n=list[i];cur={r:n.r,c:n.col,dir:n.dir};const e=cellsOf(n).find(k=>!user[k]);if(e)[cur.r,cur.c]=e.split(',').map(Number);paint()}
+function finishCheck(){
+ if(Object.keys(P.sol).every(k=>user[k]===P.sol[k])){
+  $('doneTxt').textContent=revealed.size?`Krossvord həll olundu. Açılan hərf: ${revealed.size}.`:'Krossvordu heç bir ipucu olmadan həll etdin!';
+  setTimeout(()=>$('done').classList.add('on'),300);
+ }
+}
+function newPuzzle(inc=true){P=gen();user={};revealed=new Set();bad=new Set();if(inc)num++;const w=P.words.find(x=>x.n===1);cur={r:w.r,c:w.col,dir:w.dir};$('done').classList.remove('on');build();save()}
+
+$('grid').addEventListener('click',e=>{const el=e.target.closest('.cell.on');if(el){const [r,c]=el.dataset.k.split(',').map(Number);select(r,c)}});
+document.querySelector('.clues').addEventListener('click',e=>{const li=e.target.closest('li');if(!li)return;const w=P.words.find(q=>q.n==li.dataset.n&&q.dir===li.dataset.d);cur={r:w.r,c:w.col,dir:w.dir};paint();$('grid').scrollIntoView({behavior:'smooth',block:'center'})});
+$('check').addEventListener('click',()=>{bad=new Set(Object.keys(user).filter(k=>user[k]!==P.sol[k]));paint();if(!bad.size)alertBar('Səhv hərf yoxdur')});
+$('revL').addEventListener('click',()=>{const k=key(cur.r,cur.c);user[k]=P.sol[k];revealed.add(k);bad.delete(k);step(1);paint();save();finishCheck()});
+$('revW').addEventListener('click',()=>{const w=curWord();if(!w)return;cellsOf(w).forEach(k=>{if(user[k]!==P.sol[k]){user[k]=P.sol[k];revealed.add(k);bad.delete(k)}});paint();save();finishCheck()});
+$('newP').addEventListener('click',()=>newPuzzle());
+$('doneNew').addEventListener('click',()=>newPuzzle());
+$('prev').addEventListener('click',()=>jump(-1));
+$('next').addEventListener('click',()=>jump(1));
+function alertBar(m){const t=$('clueTxt'),o=t.textContent;t.textContent=m;setTimeout(()=>paint(),1400)}
+
+const rows=['QÜERTYUİOPÖĞ','ASDFGHJKLIƏ','ZXCVBNMÇŞ'];
+$('kb').innerHTML=rows.map((r,i)=>`<div>${[...r].map(ch=>`<button class="key" data-ch="${ch}">${ch}</button>`).join('')}${i===2?'<button class="key wide" data-ch="⌫" aria-label="Sil">⌫</button>':''}</div>`).join('');
+$('kb').addEventListener('click',e=>{const b=e.target.closest('.key');if(!b)return;b.dataset.ch==='⌫'?back():type(b.dataset.ch)});
+document.addEventListener('keydown',e=>{
+ if(e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.key==='Backspace'){e.preventDefault();back();return}
+ const ar={ArrowRight:[0,1,'a'],ArrowLeft:[0,-1,'a'],ArrowDown:[1,0,'d'],ArrowUp:[-1,0,'d']}[e.key];
+ if(ar){e.preventDefault();if(cur.dir!==ar[2]&&wordAt(cur.r,cur.c,ar[2])){cur.dir=ar[2]}else{const k=key(cur.r+ar[0],cur.c+ar[1]);if(P.sol[k]){cur.r+=ar[0];cur.c+=ar[1];if(!wordAt(cur.r,cur.c,cur.dir))cur.dir=ar[2]}}paint();return}
+ if(e.key==='Tab'){e.preventDefault();jump(e.shiftKey?-1:1);return}
+ if(e.key.length===1){const ch=e.key.toLocaleUpperCase('az');if(ALPHA.includes(ch)){e.preventDefault();type(ch)}}
+});
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(build,150)});
+
+try{const s=JSON.parse(localStorage.getItem('kv-state'));if(s&&s.P&&s.P.words){P=s.P;user=s.user||{};revealed=new Set(s.revealed||[]);num=s.num||1;const w=P.words.find(x=>x.n===1);cur={r:w.r,c:w.col,dir:w.dir};build()}}catch(e){}
+if(!P)newPuzzle(false);
+}
+</script>
+</body>
+</html>
