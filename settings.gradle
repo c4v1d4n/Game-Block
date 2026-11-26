@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "KerpicBlok"
-include ':app', ':kart', ':krossvord'
+include ':app', ':kart', ':krossvord', ':deniz'

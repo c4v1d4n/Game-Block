@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dəniz Döyüşü</title>
+<style>
+/* VOICE: school-desk game, friendly and quick
+   IDEA: the squared school notebook page the game was always drawn on
+   PICTURE: the boards themselves, blue ink on squared paper, red pencil hits
+   COLOUR/TYPE: paper white, ink blue, pencil red; system sans
+   LAYOUT: header, status, big target board, small own board, log */
+:root{--paper:#fbfaf5;--line:#c9dcef;--ink:#1d4fa3;--ink2:#0f2f66;--red:#d3312b;--mute:#5f6b7a;--sel:#ffe27a}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;min-height:100%}
+body{background-color:var(--paper);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:22px 22px;color:var(--ink2);font:16px/1.45 system-ui,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;top:0;bottom:0;left:min(9vw,48px);width:2px;background:#e9a3a3;z-index:-1}
+.wrap{max-width:560px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom))}
+h1{margin:0 0 4px;font-size:34px;line-height:1.05;color:var(--ink);font-weight:800;letter-spacing:.3px}
+.sub{margin:0 0 18px;color:var(--mute)}
+.panel{background:rgba(255,255,255,.88);border:1.5px solid var(--ink);border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:3px 3px 0 rgba(29,79,163,.18)}
+label{display:block;font-weight:700;margin-bottom:6px}
+input{width:100%;font:inherit;font-size:17px;min-height:48px;padding:0 12px;border:1.5px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink2)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+.row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.row>*{flex:1}
+button{font:inherit;font-weight:700;font-size:16px;min-height:48px;padding:0 16px;border:1.5px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer}
+button.pri{background:var(--ink);color:#fff}
+button.red{background:var(--red);border-color:var(--red);color:#fff}
+button:disabled{opacity:.4;cursor:default}
+.code{font-size:40px;font-weight:800;letter-spacing:8px;color:var(--red);line-height:1}
+.players{list-style:none;padding:0;margin:10px 0 0}
+.players li{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.tag{font-size:13px;color:var(--mute)}
+.ok{color:#1f8a4c;font-weight:700}
+.board{display:grid;grid-template-columns:calc(var(--c)*.8) repeat(10,var(--c));grid-auto-rows:var(--c);user-select:none;-webkit-user-select:none;margin:0 auto;width:max-content}
+.board .lb{display:flex;align-items:center;justify-content:center;font-size:max(9px,calc(var(--c)*.36));color:var(--mute)}
+.board .cl{position:relative;border:1px solid #9fbfe2;margin:0 -1px -1px 0;background:#fff}
+.board.tap .cl{cursor:pointer}
+.board.tap .cl.e:active{background:var(--sel)}
+.cl.ship{background:#cddcf3;border-color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.cl.pick{background:var(--sel)}
+.cl.m::after{content:"";position:absolute;left:50%;top:50%;width:22%;height:22%;margin:-11% 0 0 -11%;border-radius:50%;background:var(--ink)}
+.cl.h::before,.cl.h::after,.cl.s::before,.cl.s::after{content:"";position:absolute;left:12%;right:12%;top:50%;height:2.5px;margin-top:-1px;background:var(--red);transform:rotate(45deg)}
+.cl.h::after,.cl.s::after{transform:rotate(-45deg)}
+.cl.s{background:repeating-linear-gradient(45deg,#f6d3d1 0 3px,#fff 3px 6px)}
+.cl.last{outline:2.5px solid var(--sel);outline-offset:-2px;z-index:1}
+.status{padding:12px 14px;border-radius:10px;font-weight:700;margin-bottom:12px;text-align:center;border:1.5px solid var(--ink)}
+.status.me{background:var(--red);border-color:var(--red);color:#fff}
+.status.wait{background:#fff}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{flex:1;min-width:0;padding:4px 8px;line-height:1.2;font-size:15px}
+.tabs button small{display:block;font-weight:400;font-size:12px}
+.tabs button.cur{background:var(--ink);color:#fff}
+.tabs button.dead{text-decoration:line-through;opacity:.55}
+.boardTitle{text-align:center;font-weight:700;margin:4px 0 8px}
+.log{list-style:none;margin:0;padding:0;font-size:14px;color:var(--mute)}
+.log li{padding:3px 0;border-bottom:1px dashed var(--line)}
+.log li:first-child{color:var(--ink2);font-weight:600}
+.hint{font-size:14px;color:var(--mute);margin:8px 0 0}
+.err{color:var(--red);font-weight:600;min-height:1.4em;margin:8px 0 0}
+.ov{position:fixed;inset:0;background:rgba(15,47,102,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.ov.on{display:flex}
+.ov .panel{max-width:360px;text-align:center}
+.ov h2{margin:0 0 6px;font-size:30px;color:var(--ink)}
+.fleet{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:10px 0 0;font-size:13px;color:var(--mute)}
+.fleet span i{display:inline-block;width:10px;height:10px;border:1.5px solid var(--ink);background:#cddcf3;margin-right:1px;vertical-align:-1px}
+details{margin-top:6px}
+summary{cursor:pointer;font-weight:700;color:var(--ink);min-height:32px}
+</style>
+</head>
+<body>
+<div class="wrap" id="main"></div>
+<div class="ov" id="ov"><div class="panel" id="ovBox"></div></div>
+<script>
+{
+const N=10,FLEET=[4,3,3,2,2,2,1,1,1,1],COLS='ABCDEFGHİJ';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const LOCAL=location.hash==='#local';
+const DB='https://deniz-doyusu-default-rtdb.europe-west1.firebasedatabase.app/rooms/';
+
+/* ---------- ships ---------- */
+const cellsOf=s=>Array.from({length:s.len},(_,i)=>s.dir==='h'?s.r*N+s.c+i:(s.r+i)*N+s.c);
+function fitsShip(ships,s,skip){
+ if(s.r<0||s.c<0||(s.dir==='h'?s.c+s.len>N||s.r>=N:s.r+s.len>N||s.c>=N))return false;
+ const block=new Set();
+ ships.forEach((o,i)=>{if(i===skip)return;cellsOf(o).forEach(k=>{const r=k/N|0,c=k%N;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)block.add((r+dr)*N+(c+dc)+'|'+(c+dc>=0&&c+dc<N))})});
+ return cellsOf(s).every(k=>!block.has(k+'|true'));
+}
+function randomFleet(){
+ for(;;){const ships=[];let ok=true;
+  for(const len of FLEET){let placed=false;
+   for(let t=0;t<300&&!placed;t++){const s={len,dir:Math.random()<.5?'h':'v',r:Math.random()*N|0,c:Math.random()*N|0};if(fitsShip(ships,s,-1)){ships.push(s);placed=true}}
+   if(!placed){ok=false;break}}
+  if(ok)return ships}
+}
+function validFleet(ships){
+ if(!Array.isArray(ships)||ships.length!==FLEET.length)return false;
+ const lens=ships.map(s=>s.len).sort().join();if(lens!==FLEET.slice().sort().join())return false;
+ return ships.every((s,i)=>[s.r,s.c].every(Number.isInteger)&&(s.dir==='h'||s.dir==='v')&&fitsShip(ships,s,i));
+}
+
+/* ---------- network (Firebase Realtime Database REST) ---------- */
+const api=(path,method='GET',body)=>fetch(DB+path+'.json',{method,body:body===undefined?undefined:JSON.stringify(body),keepalive:method==='DELETE'}).then(r=>{if(!r.ok)throw new Error('http '+r.status);return r.json()});
+const Net={
+ isHost:false,myId:null,code:null,bc:null,es:null,
+ async host(code,onMsg,onLeave,onReady,onErr){
+  this.isHost=true;this.code=code;this.myId='H'+Math.random().toString(36).slice(2,8);
+  if(LOCAL){this.bc=new BroadcastChannel('dd-'+code);this.bc.onmessage=e=>{const d=e.data;if(d.to!=='H')return;if(d.msg.t==='bye')onLeave(d.from);else onMsg(d.from,d.msg)};onReady();return}
+  try{if(await api(code+'/state'))return onErr('Kod məşğuldur, yenidən cəhd et')}catch(e){return onErr('İnternet bağlantısını yoxla')}
+  onReady();
+  const seen=new Set();
+  const handle=(key,d)=>{if(!d||seen.has(key))return;seen.add(key);onMsg(d.from,d.msg);api(code+'/inbox/'+key,'DELETE').catch(()=>{})};
+  this.es=new EventSource(DB+code+'/inbox.json');
+  const on=e=>{const {path,data}=JSON.parse(e.data);if(path==='/'){if(data)Object.keys(data).sort().forEach(k=>handle(k,data[k]))}else{const k=path.split('/')[1];if(path.split('/').length===2)handle(k,data)}};
+  this.es.addEventListener('put',on);this.es.addEventListener('patch',on);
+  const hb={};let beat=0;
+  this.timer=setInterval(async()=>{
+   api(code+'/beat','PUT',++beat).catch(()=>{});
+   try{const h=await api(code+'/hb')||{};const now=Date.now();
+    for(const id in h){if(!hb[id]||hb[id].v!==h[id])hb[id]={v:h[id],t:now}}
+    S&&S.players.forEach(p=>{if(p.id===this.myId||p.left)return;const x=hb[p.id];if(x&&now-x.t>35000){delete hb[p.id];onLeave(p.id)}});
+   }catch(e){}
+  },5000);
+  addEventListener('pagehide',()=>api(code,'DELETE').catch(()=>{}));
+ },
+ async join(code,name,onMsg,onClose,onErr){
+  this.code=code;this.myId='P'+Math.random().toString(36).slice(2,8);
+  if(LOCAL){this.bc=new BroadcastChannel('dd-'+code);this.bc.onmessage=e=>{const d=e.data;if(d.to===this.myId||d.to==='*')onMsg(d.msg)};addEventListener('beforeunload',()=>this.send({t:'bye'}));this.send({t:'join',name});return}
+  let st;try{st=await api(code+'/state')}catch(e){return onErr('İnternet bağlantısını yoxla')}
+  if(!st)return onErr('Bu kodla otaq tapılmadı');
+  if(st.phase!=='lobby')return onErr('Oyun artıq başlayıb');
+  if((st.players||[]).length>=4)return onErr('Otaq doludur (4 nəfər)');
+  this.es=new EventSource(DB+code+'/state.json');
+  const on=async e=>{const {path,data}=JSON.parse(e.data);if(path==='/'){if(data)onMsg({t:'state',s:data});else onClose()}else{try{const d=await api(code+'/state');d?onMsg({t:'state',s:d}):onClose()}catch(x){}}};
+  this.es.addEventListener('put',on);this.es.addEventListener('patch',on);
+  await this.send({t:'join',name});
+  let n=0,lastBeat=null,lastT=Date.now();
+  this.timer=setInterval(async()=>{
+   api(code+'/hb/'+this.myId,'PUT',++n).catch(()=>{});
+   try{const b=await api(code+'/beat');if(b!==lastBeat){lastBeat=b;lastT=Date.now()}else if(Date.now()-lastT>45000){clearInterval(this.timer);this.es.close();onClose()}}catch(e){}
+  },5000);
+ },
+ send(msg){if(LOCAL)return this.bc.postMessage({to:'H',from:this.myId,msg});return api(this.code+'/inbox','POST',{from:this.myId,msg}).catch(()=>{})},
+ publish(v){if(LOCAL)return this.bc.postMessage({to:'*',from:'H',msg:{t:'state',s:v}});api(this.code+'/state','PUT',v).catch(()=>{})},
+ sendTo(){}
+};
+
+/* ---------- host game logic ---------- */
+let S=null; // host-only full state
+function newPlayer(id,name){return{id,name:String(name||'Oyunçu').slice(0,16),ready:false,ships:null,alive:true,left:false,marks:'.'.repeat(100),remaining:10}}
+function pub(){return{phase:S.phase,turn:S.turn,winner:S.winner,code:S.code,log:S.log.slice(0,8),last:S.last,
+ players:S.players.map(p=>({id:p.id,name:p.name,ready:p.ready,alive:p.alive,left:p.left,marks:p.marks,remaining:p.remaining}))}}
+function broadcast(){const v=pub();onState(v);Net.publish(v)}
+function hostMsg(from,m){
+ let p=S.players.find(x=>x.id===from);
+ if(m.t==='join'){
+  if(p){broadcast();return}
+  if(S.phase!=='lobby'||S.players.length>=4)return;
+  S.players.push(newPlayer(from,m.name));S.log.unshift(`${S.players.at(-1).name} qoşuldu`);broadcast();return;
+ }
+ if(!p)return;
+ if(m.t==='ready'&&S.phase==='lobby'){if(m.ships&&validFleet(m.ships)){p.ships=m.ships;p.ready=true}else{p.ready=false;p.ships=null}broadcast()}
+ if(m.t==='shoot'&&S.phase==='play')shoot(S.players.indexOf(p),m.target,m.cell);
+ if(m.t==='start'&&from===Net.myId)startGame();
+ if(m.t==='again'&&from===Net.myId)toLobby();
+}
+function hostLeave(id){
+ const i=S.players.findIndex(x=>x.id===id);if(i<0)return;const p=S.players[i];
+ S.log.unshift(`${p.name} oyundan çıxdı`);
+ if(S.phase==='lobby'){S.players.splice(i,1)}
+ else{p.left=true;if(p.alive){p.alive=false;if(S.phase==='play'){if(S.turn===i)S.turn=nextAlive(i);checkWin()}}}
+ broadcast();
+}
+function startGame(){
+ const act=S.players.filter(p=>!p.left);
+ if(S.phase!=='lobby'||act.length<2||!act.every(p=>p.ready))return;
+ S.players=act;S.players.forEach(p=>{p.alive=true;p.marks='.'.repeat(100);p.remaining=10});
+ S.phase='play';S.turn=Math.random()*S.players.length|0;S.winner=null;S.last=null;
+ S.log=[`Oyun başladı! İlk atəş: ${S.players[S.turn].name}`];broadcast();
+}
+function toLobby(){S.phase='lobby';S.players=S.players.filter(p=>!p.left);S.players.forEach(p=>{p.ready=false;p.ships=null;p.alive=true;p.marks='.'.repeat(100);p.remaining=10});S.winner=null;S.last=null;S.log=['Yeni oyun: gəmiləri yerləşdirin'];broadcast()}
+function nextAlive(i){const n=S.players.length;for(let k=1;k<=n;k++){const j=(i+k)%n;if(S.players[j].alive)return j}return i}
+function checkWin(){const al=S.players.filter(p=>p.alive);if(al.length<=1){S.phase='over';S.winner=al[0]?al[0].name:null;S.log.unshift(S.winner?`🏆 ${S.winner} qalib gəldi!`:'Oyun bitdi')}}
+function shoot(pi,ti,cell){
+ const P=S.players[pi],T=S.players[ti];
+ if(S.turn!==pi||!P.alive||!T||ti===pi||!T.alive||!(cell>=0&&cell<100)||T.marks[cell]!=='.')return;
+ const mk=T.marks.split('');const at=COLS[cell%N]+(Math.floor(cell/N)+1);
+ const ship=T.ships.find(s=>cellsOf(s).includes(cell));
+ S.last={t:ti,cell};
+ if(ship){
+  mk[cell]='h';
+  const cs=cellsOf(ship);
+  if(cs.every(k=>mk[k]!=='.')){cs.forEach(k=>{mk[k]='s';const r=k/N|0,c=k%N;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const R=r+dr,C=c+dc;if(R>=0&&R<N&&C>=0&&C<N&&mk[R*N+C]==='.')mk[R*N+C]='m'}});
+   T.remaining--;S.log.unshift(`${P.name} → ${T.name} ${at}: gəmi batdı!`);
+   if(!T.remaining){T.alive=false;S.log.unshift(`${T.name} bütün gəmilərini itirdi`)}}
+  else S.log.unshift(`${P.name} → ${T.name} ${at}: vurdu!`);
+  T.marks=mk.join('');checkWin();
+ }else{mk[cell]='m';T.marks=mk.join('');S.log.unshift(`${P.name} → ${T.name} ${at}: boş`);S.turn=nextAlive(pi)}
+ broadcast();
+}
+
+/* ---------- client ---------- */
+let me={name:'',ships:randomFleet(),pick:-1},V=null,target=-1,screen='home',err='',wasMyTurn=false;
+try{me.name=localStorage.getItem('dd-name')||''}catch(e){}
+function act(m){if(Net.isHost)hostMsg(Net.myId,m);else Net.send(m)}
+function onState(v){
+ V=v;V.log=V.log||[];V.players=V.players||[];screen='room';
+ const myI=V.players.findIndex(p=>p.id===Net.myId);
+ const mine=V.phase==='play'&&V.turn===myI;
+ if(mine&&!wasMyTurn){try{navigator.vibrate&&navigator.vibrate(120)}catch(e){}}
+ wasMyTurn=mine;
+ render();
+}
+function genCode(){const A='ABCDEFGHJKLMNPRSTUVXYZ';return Array.from({length:4},()=>A[Math.random()*A.length|0]).join('')}
+function createRoom(){
+ const name=($('name').value||'').trim();if(!name)return setErr('Adını yaz');saveName(name);
+ const code=genCode();setErr('Otaq yaradılır…');
+ Net.host(code,hostMsg,hostLeave,()=>{S={phase:'lobby',code,players:[newPlayer(Net.myId,name)],turn:0,winner:null,log:['Otaq yaradıldı'],last:null};broadcast()},setErr);
+}
+function joinRoom(){
+ const name=($('name').value||'').trim(),code=($('code').value||'').trim().toUpperCase();
+ if(!name)return setErr('Adını yaz');if(!/^[A-Z]{4}$/.test(code))return setErr('4 hərfli kodu yaz');saveName(name);
+ setErr('Qoşulur…');
+ Net.join(code,name,m=>{if(m.t==='state')onState(m.s)},
+  ()=>showOv('<h2>Bağlantı kəsildi</h2><p>Otağı yaradan oyundan çıxdı və ya internet kəsildi.</p><button class="pri" onclick="location.reload()">Ana səhifə</button>'),
+  setErr);
+}
+function saveName(n){me.name=n;try{localStorage.setItem('dd-name',n)}catch(e){}}
+function setErr(t){err=t;const e=$('err');if(e)e.textContent=t}
+function showOv(h){$('ovBox').innerHTML=h;$('ov').classList.add('on')}
+
+/* ---------- render ---------- */
+function board(marks,ships,{size,tap,pick=-1,last=-1}){
+ const shipCells=new Map();(ships||[]).forEach((s,i)=>cellsOf(s).forEach(k=>shipCells.set(k,i)));
+ let h=`<div class="board ${tap?'tap':''}" style="--c:${size}px" data-tap="${tap||''}"><div></div>`;
+ for(let c=0;c<N;c++)h+=`<div class="lb">${COLS[c]}</div>`;
+ for(let r=0;r<N;r++){h+=`<div class="lb">${r+1}</div>`;
+  for(let c=0;c<N;c++){const k=r*N+c,m=marks?marks[k]:'.',si=shipCells.get(k);
+   let cls='cl';if(si!==undefined)cls+=' ship';if(si!==undefined&&si===pick)cls+=' pick';if(m==='m')cls+=' m';if(m==='h')cls+=' h';if(m==='s')cls+=' s';if(m==='.')cls+=' e';if(k===last)cls+=' last';
+   h+=`<div class="${cls}" data-k="${k}"></div>`}}
+ return h+'</div>';
+}
+function cellSize(frac=1){return Math.floor(Math.min(36,(Math.min(innerWidth,560)-60)/10.8)*frac)}
+const fleetLegend='<div class="fleet">'+[[4,1],[3,2],[2,3],[1,4]].map(([l,n])=>`<span>${'<i></i>'.repeat(l)} × ${n}</span>`).join('')+'</div>';
+function render(){
+ const M=$('main');
+ if(screen==='home'){
+  M.innerHTML=`<h1>Dəniz Döyüşü</h1><p class="sub">2–4 nəfərlik onlayn oyun. Hər kəs öz telefonundan oynayır.</p>
+  <div class="panel"><label for="name">Adın</label><input id="name" maxlength="16" autocomplete="nickname" value="${esc(me.name)}" placeholder="Məsələn: Elvin"></div>
+  <div class="panel"><button class="pri" id="create" style="width:100%">Otaq yarat</button>
+   <p class="hint">Otaq yaradandan sonra 4 hərfli kodu dostlarına göndər.</p></div>
+  <div class="panel"><label for="code">Otaq kodu</label><div class="row"><input id="code" maxlength="4" autocapitalize="characters" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:4px;font-weight:700"><button id="join" style="flex:0 0 auto">Qoşul</button></div></div>
+  <p class="err" id="err">${esc(err)}</p>
+  <details class="panel"><summary>Necə oynanılır?</summary><p>Hər oyunçunun 10×10 xəritəsində 10 gəmisi var. Gəmilər bir-birinə, hətta küncdən də toxunmur. Növbən gələndə rəqiblərdən birini seçib xanaya atəş aç. Vursan, yenidən atırsan, boşa düşsə növbə keçir. Bütün gəmiləri batan oyunçu çıxır, sonadək qalan qalib gəlir.</p>${fleetLegend}</details>
+  ${LOCAL?'<p class="hint">Yerli sınaq rejimi: eyni brauzerin pəncərələri arasında işləyir.</p>':''}`;
+  $('create').onclick=createRoom;$('join').onclick=joinRoom;return;
+ }
+ const myI=V.players.findIndex(p=>p.id===Net.myId),mp=V.players[myI];
+ if(V.phase==='lobby'){
+  const all=V.players.length>=2&&V.players.every(p=>p.ready);
+  M.innerHTML=`<div class="panel" style="text-align:center"><div class="tag">Otaq kodu</div><div class="code">${esc(V.code)}</div>
+   <p class="hint">Bu kodu dostlarına göndər. ${V.players.length}/4 oyunçu</p>
+   <ul class="players" style="text-align:start">${V.players.map(p=>`<li><span>${esc(p.name)}${p.id===Net.myId?' <span class="tag">(sən)</span>':''}</span>${p.ready?'<span class="ok">✓ Hazır</span>':'<span class="tag">gəmiləri düzür…</span>'}</li>`).join('')}</ul></div>
+  <div class="panel"><div class="boardTitle">${mp&&mp.ready?'Gəmilərin hazırdır':'Gəmilərini yerləşdir'}</div>
+   ${board(null,me.ships,{size:cellSize(),tap:mp&&mp.ready?'':'place',pick:me.pick})}
+   ${mp&&mp.ready?'':'<p class="hint">Gəmiyə toxun və seç. Yenidən toxunsan, döndərilir. Boş xanaya toxunsan, seçilmiş gəmi oraya keçir.</p>'}
+   ${fleetLegend}
+   <div class="row" style="margin-top:12px">${mp&&mp.ready?'<button id="unready">Dəyiş</button>':'<button id="rand">Təsadüfi düz</button><button class="pri" id="ready">Hazıram</button>'}</div>
+   ${Net.isHost?`<button class="red" id="start" style="width:100%;margin-top:10px" ${all?'':'disabled'}>Oyunu başlat</button><p class="hint">${all?'Hamı hazırdır!':'Ən azı 2 oyunçu və hamısı hazır olmalıdır.'}</p>`:'<p class="hint">Hamı hazır olanda otağı yaradan oyunu başladacaq.</p>'}
+  </div>`;
+  bindBoard();
+  $('rand')&&($('rand').onclick=()=>{me.ships=randomFleet();me.pick=-1;render()});
+  $('ready')&&($('ready').onclick=()=>{me.pick=-1;act({t:'ready',ships:me.ships})});
+  $('unready')&&($('unready').onclick=()=>act({t:'ready',ships:null}));
+  $('start')&&($('start').onclick=()=>act({t:'start'}));
+  $('ov').classList.remove('on');
+  return;
+ }
+ // play / over
+ const opp=V.players.map((p,i)=>({p,i})).filter(o=>o.i!==myI);
+ if(!opp.find(o=>o.i===target&&o.p.alive))target=(opp.find(o=>o.p.alive)||opp[0]).i;
+ const myTurn=V.phase==='play'&&V.turn===myI&&mp.alive;
+ const T=V.players[target],tp=V.players[V.turn];
+ const status=V.phase==='over'?`🏆 Qalib: ${esc(V.winner||'—')}`:!mp.alive?'Gəmilərin batdı — oyunu izləyirsən':myTurn?'Sənin növbən! Rəqib seç və atəş aç':`Növbə: ${esc(tp.name)}`;
+ M.innerHTML=`<div class="status ${myTurn?'me':'wait'}">${status}</div>
+  <div class="tabs">${opp.map(o=>`<button data-t="${o.i}" class="${o.i===target?'cur':''} ${o.p.alive?'':'dead'}">${esc(o.p.name)}<small>${o.p.alive?`${o.p.remaining} gəmi`:o.p.left?'çıxdı':'batdı'}${V.turn===o.i&&V.phase==='play'?' · atır':''}</small></button>`).join('')}</div>
+  <div class="panel"><div class="boardTitle">${esc(T.name)}-in dənizi</div>
+   ${board(T.marks,null,{size:cellSize(),tap:myTurn&&T.alive?'shoot':'',last:V.last&&V.last.t===target?V.last.cell:-1})}</div>
+  <div class="panel"><div class="boardTitle">Sənin donanman · ${mp.remaining} gəmi</div>
+   ${board(mp.marks,me.ships,{size:cellSize(.62),last:V.last&&V.last.t===myI?V.last.cell:-1})}</div>
+  <div class="panel"><ul class="log">${V.log.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`;
+ M.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{target=+b.dataset.t;render()});
+ bindBoard();
+ if(V.phase==='over')showOv(`<h2>${V.winner===mp.name&&mp.alive?'🏆 Qalib gəldin!':'Oyun bitdi'}</h2><p>${V.winner?esc(V.winner)+' qalib gəldi.':''}</p>${Net.isHost?'<button class="pri" id="again" style="width:100%">Yeni oyun</button>':'<p class="hint">Otağı yaradan yeni oyun başlada bilər.</p>'}<div style="height:8px"></div><button id="closeOv" style="width:100%">Xəritələrə bax</button>`),
+  $('again')&&($('again').onclick=()=>act({t:'again'})),$('closeOv').onclick=()=>$('ov').classList.remove('on');
+ else $('ov').classList.remove('on');
+}
+function bindBoard(){
+ document.querySelectorAll('.board[data-tap]').forEach(b=>{const mode=b.dataset.tap;if(!mode)return;
+  b.onclick=e=>{const el=e.target.closest('.cl');if(!el)return;const k=+el.dataset.k;
+   if(mode==='shoot'){if(el.classList.contains('e'))act({t:'shoot',target,cell:k});return}
+   const si=me.ships.findIndex(s=>cellsOf(s).includes(k));
+   if(si>=0){if(si===me.pick){const s=me.ships[si],n={...s,dir:s.dir==='h'?'v':'h'};if(fitsShip(me.ships,n,si))me.ships[si]=n}else me.pick=si}
+   else if(me.pick>=0){const s=me.ships[me.pick],n={...s,r:k/N|0,c:k%N};if(fitsShip(me.ships,n,me.pick))me.ships[me.pick]=n}
+   render()}});
+}
+addEventListener('resize',()=>{if(screen!=='home')render()});
+render();
+}
+</script>
+</body>
+</html>
