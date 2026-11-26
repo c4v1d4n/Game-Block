@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dəniz Döyüşü</title>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 /* VOICE: school-desk game, friendly and quick
    IDEA: the squared school notebook page the game was always drawn on
@@ -78,7 +77,8 @@ summary{cursor:pointer;font-weight:700;color:var(--ink);min-height:32px}
 const N=10,FLEET=[4,3,3,2,2,2,1,1,1,1],COLS='ABCDEFGHİJ';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const LOCAL=location.hash==='#local'||typeof Peer==='undefined';
+const LOCAL=location.hash==='#local';
+const DB='https://deniz-doyusu-default-rtdb.europe-west1.firebasedatabase.app/rooms/';
 
 /* ---------- ships ---------- */
 const cellsOf=s=>Array.from({length:s.len},(_,i)=>s.dir==='h'?s.r*N+s.c+i:(s.r+i)*N+s.c);
@@ -101,34 +101,50 @@ function validFleet(ships){
  return ships.every((s,i)=>[s.r,s.c].every(Number.isInteger)&&(s.dir==='h'||s.dir==='v')&&fitsShip(ships,s,i));
 }
 
-/* ---------- network ---------- */
+/* ---------- network (Firebase Realtime Database REST) ---------- */
+const api=(path,method='GET',body)=>fetch(DB+path+'.json',{method,body:body===undefined?undefined:JSON.stringify(body),keepalive:method==='DELETE'}).then(r=>{if(!r.ok)throw new Error('http '+r.status);return r.json()});
 const Net={
- isHost:false,myId:null,conns:{},peer:null,bc:null,
- host(code,onMsg,onLeave,onReady,onErr){
-  this.isHost=true;
-  if(LOCAL){this.myId='H';this.bc=new BroadcastChannel('dd-'+code);
-   this.bc.onmessage=e=>{const d=e.data;if(d.to!=='H')return;if(d.msg.t==='bye')onLeave(d.from);else onMsg(d.from,d.msg)};
-   onReady();return}
-  this.peer=new Peer('dd-az-'+code,{debug:0});
-  this.peer.on('open',id=>{this.myId=id;onReady()});
-  this.peer.on('error',e=>onErr(e.type));
-  this.peer.on('connection',conn=>{
-   conn.on('open',()=>{this.conns[conn.peer]=conn});
-   conn.on('data',d=>onMsg(conn.peer,d));
-   conn.on('close',()=>{delete this.conns[conn.peer];onLeave(conn.peer)});
-  });
+ isHost:false,myId:null,code:null,bc:null,es:null,
+ async host(code,onMsg,onLeave,onReady,onErr){
+  this.isHost=true;this.code=code;this.myId='H'+Math.random().toString(36).slice(2,8);
+  if(LOCAL){this.bc=new BroadcastChannel('dd-'+code);this.bc.onmessage=e=>{const d=e.data;if(d.to!=='H')return;if(d.msg.t==='bye')onLeave(d.from);else onMsg(d.from,d.msg)};onReady();return}
+  try{if(await api(code+'/state'))return onErr('Kod məşğuldur, yenidən cəhd et')}catch(e){return onErr('İnternet bağlantısını yoxla')}
+  onReady();
+  const seen=new Set();
+  const handle=(key,d)=>{if(!d||seen.has(key))return;seen.add(key);onMsg(d.from,d.msg);api(code+'/inbox/'+key,'DELETE').catch(()=>{})};
+  this.es=new EventSource(DB+code+'/inbox.json');
+  const on=e=>{const {path,data}=JSON.parse(e.data);if(path==='/'){if(data)Object.keys(data).sort().forEach(k=>handle(k,data[k]))}else{const k=path.split('/')[1];if(path.split('/').length===2)handle(k,data)}};
+  this.es.addEventListener('put',on);this.es.addEventListener('patch',on);
+  const hb={};let beat=0;
+  this.timer=setInterval(async()=>{
+   api(code+'/beat','PUT',++beat).catch(()=>{});
+   try{const h=await api(code+'/hb')||{};const now=Date.now();
+    for(const id in h){if(!hb[id]||hb[id].v!==h[id])hb[id]={v:h[id],t:now}}
+    S&&S.players.forEach(p=>{if(p.id===this.myId||p.left)return;const x=hb[p.id];if(x&&now-x.t>35000){delete hb[p.id];onLeave(p.id)}});
+   }catch(e){}
+  },5000);
+  addEventListener('pagehide',()=>api(code,'DELETE').catch(()=>{}));
  },
- join(code,onMsg,onClose,onReady,onErr){
-  if(LOCAL){this.myId='P'+Math.random().toString(36).slice(2,8);this.bc=new BroadcastChannel('dd-'+code);
-   this.bc.onmessage=e=>{const d=e.data;if(d.to===this.myId||d.to==='*')onMsg(d.msg)};
-   addEventListener('beforeunload',()=>this.send({t:'bye'}));onReady();return}
-  this.peer=new Peer({debug:0});
-  this.peer.on('error',e=>onErr(e.type));
-  this.peer.on('open',id=>{this.myId=id;const conn=this.peer.connect('dd-az-'+code,{reliable:true});this.conns.H=conn;
-   conn.on('open',onReady);conn.on('data',onMsg);conn.on('close',onClose)});
+ async join(code,name,onMsg,onClose,onErr){
+  this.code=code;this.myId='P'+Math.random().toString(36).slice(2,8);
+  if(LOCAL){this.bc=new BroadcastChannel('dd-'+code);this.bc.onmessage=e=>{const d=e.data;if(d.to===this.myId||d.to==='*')onMsg(d.msg)};addEventListener('beforeunload',()=>this.send({t:'bye'}));this.send({t:'join',name});return}
+  let st;try{st=await api(code+'/state')}catch(e){return onErr('İnternet bağlantısını yoxla')}
+  if(!st)return onErr('Bu kodla otaq tapılmadı');
+  if(st.phase!=='lobby')return onErr('Oyun artıq başlayıb');
+  if((st.players||[]).length>=4)return onErr('Otaq doludur (4 nəfər)');
+  this.es=new EventSource(DB+code+'/state.json');
+  const on=async e=>{const {path,data}=JSON.parse(e.data);if(path==='/'){if(data)onMsg({t:'state',s:data});else onClose()}else{try{const d=await api(code+'/state');d?onMsg({t:'state',s:d}):onClose()}catch(x){}}};
+  this.es.addEventListener('put',on);this.es.addEventListener('patch',on);
+  await this.send({t:'join',name});
+  let n=0,lastBeat=null,lastT=Date.now();
+  this.timer=setInterval(async()=>{
+   api(code+'/hb/'+this.myId,'PUT',++n).catch(()=>{});
+   try{const b=await api(code+'/beat');if(b!==lastBeat){lastBeat=b;lastT=Date.now()}else if(Date.now()-lastT>45000){clearInterval(this.timer);this.es.close();onClose()}}catch(e){}
+  },5000);
  },
- send(msg){if(LOCAL)this.bc.postMessage({to:'H',from:this.myId,msg});else this.conns.H&&this.conns.H.open&&this.conns.H.send(msg)},
- sendTo(id,msg){if(LOCAL)this.bc.postMessage({to:id,from:'H',msg});else{const c=this.conns[id];c&&c.open&&c.send(msg)}}
+ send(msg){if(LOCAL)return this.bc.postMessage({to:'H',from:this.myId,msg});return api(this.code+'/inbox','POST',{from:this.myId,msg}).catch(()=>{})},
+ publish(v){if(LOCAL)return this.bc.postMessage({to:'*',from:'H',msg:{t:'state',s:v}});api(this.code+'/state','PUT',v).catch(()=>{})},
+ sendTo(){}
 };
 
 /* ---------- host game logic ---------- */
@@ -136,13 +152,12 @@ let S=null; // host-only full state
 function newPlayer(id,name){return{id,name:String(name||'Oyunçu').slice(0,16),ready:false,ships:null,alive:true,left:false,marks:'.'.repeat(100),remaining:10}}
 function pub(){return{phase:S.phase,turn:S.turn,winner:S.winner,code:S.code,log:S.log.slice(0,8),last:S.last,
  players:S.players.map(p=>({id:p.id,name:p.name,ready:p.ready,alive:p.alive,left:p.left,marks:p.marks,remaining:p.remaining}))}}
-function broadcast(){const v=pub();S.players.forEach(p=>{if(p.id===Net.myId)onState(v);else if(!p.left)Net.sendTo(p.id,{t:'state',s:v})})}
+function broadcast(){const v=pub();onState(v);Net.publish(v)}
 function hostMsg(from,m){
  let p=S.players.find(x=>x.id===from);
  if(m.t==='join'){
   if(p){broadcast();return}
-  if(S.phase!=='lobby')return Net.sendTo(from,{t:'reject',why:'Oyun artıq başlayıb'});
-  if(S.players.length>=4)return Net.sendTo(from,{t:'reject',why:'Otaq doludur (4 nəfər)'});
+  if(S.phase!=='lobby'||S.players.length>=4)return;
   S.players.push(newPlayer(from,m.name));S.log.unshift(`${S.players.at(-1).name} qoşuldu`);broadcast();return;
  }
  if(!p)return;
@@ -191,7 +206,7 @@ let me={name:'',ships:randomFleet(),pick:-1},V=null,target=-1,screen='home',err=
 try{me.name=localStorage.getItem('dd-name')||''}catch(e){}
 function act(m){if(Net.isHost)hostMsg(Net.myId,m);else Net.send(m)}
 function onState(v){
- V=v;screen='room';
+ V=v;V.log=V.log||[];V.players=V.players||[];screen='room';
  const myI=V.players.findIndex(p=>p.id===Net.myId);
  const mine=V.phase==='play'&&V.turn===myI;
  if(mine&&!wasMyTurn){try{navigator.vibrate&&navigator.vibrate(120)}catch(e){}}
@@ -202,17 +217,15 @@ function genCode(){const A='ABCDEFGHJKLMNPRSTUVXYZ';return Array.from({length:4}
 function createRoom(){
  const name=($('name').value||'').trim();if(!name)return setErr('Adını yaz');saveName(name);
  const code=genCode();setErr('Otaq yaradılır…');
- Net.host(code,hostMsg,hostLeave,()=>{S={phase:'lobby',code,players:[newPlayer(Net.myId,name)],turn:0,winner:null,log:['Otaq yaradıldı'],last:null};broadcast()},
-  t=>setErr(t==='unavailable-id'?'Kod məşğuldur, yenidən cəhd et':'Bağlantı xətası: '+t));
+ Net.host(code,hostMsg,hostLeave,()=>{S={phase:'lobby',code,players:[newPlayer(Net.myId,name)],turn:0,winner:null,log:['Otaq yaradıldı'],last:null};broadcast()},setErr);
 }
 function joinRoom(){
  const name=($('name').value||'').trim(),code=($('code').value||'').trim().toUpperCase();
- if(!name)return setErr('Adını yaz');if(code.length!==4)return setErr('4 hərfli kodu yaz');saveName(name);
+ if(!name)return setErr('Adını yaz');if(!/^[A-Z]{4}$/.test(code))return setErr('4 hərfli kodu yaz');saveName(name);
  setErr('Qoşulur…');
- Net.join(code,m=>{if(m.t==='state')onState(m.s);if(m.t==='reject'){screen='home';render();setErr(m.why)}},
-  ()=>{showOv('<h2>Bağlantı kəsildi</h2><p>Otaq bağlandı və ya internet kəsildi.</p><button class="pri" onclick="location.reload()">Ana səhifə</button>')},
-  ()=>Net.send({t:'join',name}),
-  t=>setErr(t==='peer-unavailable'?'Bu kodla otaq tapılmadı':'Bağlantı xətası: '+t));
+ Net.join(code,name,m=>{if(m.t==='state')onState(m.s)},
+  ()=>showOv('<h2>Bağlantı kəsildi</h2><p>Otağı yaradan oyundan çıxdı və ya internet kəsildi.</p><button class="pri" onclick="location.reload()">Ana səhifə</button>'),
+  setErr);
 }
 function saveName(n){me.name=n;try{localStorage.setItem('dd-name',n)}catch(e){}}
 function setErr(t){err=t;const e=$('err');if(e)e.textContent=t}
