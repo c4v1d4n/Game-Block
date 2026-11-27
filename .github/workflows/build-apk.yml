@@ -30,4 +30,5 @@ jobs:
           cp kart/build/outputs/apk/debug/kart-debug.apk KartOyunlari.apk
           cp krossvord/build/outputs/apk/debug/krossvord-debug.apk Krossvord.apk
           cp deniz/build/outputs/apk/debug/deniz-debug.apk DenizDoyusu.apk
-          gh release create "v2.${{ github.run_number }}" KerpicBlok.apk KartOyunlari.apk Krossvord.apk DenizDoyusu.apk --title "Oyunlar v2.${{ github.run_number }}" --notes "Kerpic Blok, Kart Oyunlari, Krossvord, Deniz Doyusu" --latest
+          cp durak/build/outputs/apk/debug/durak-debug.apk Durak.apk
+          gh release create "v2.${{ github.run_number }}" KerpicBlok.apk KartOyunlari.apk Krossvord.apk DenizDoyusu.apk Durak.apk --title "Oyunlar v2.${{ github.run_number }}" --notes "Kerpic Blok, Kart Oyunlari, Krossvord, Deniz Doyusu, Durak" --latest

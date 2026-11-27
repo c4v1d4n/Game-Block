@@ -183,7 +183,17 @@ details li{color:var(--mute);font-size:14px;margin-bottom:6px}
 .tables .go{color:var(--brass);font-size:22px}
 .empty{text-align:center;color:var(--mute);padding:26px 10px}
 .tabs{display:flex;background:#06231a;border-top:1px solid rgba(217,178,90,.25);padding-bottom:env(safe-area-inset-bottom)}
-.tabs button{flex:1;border:0;background:transparent;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 9px;font-size:12px;font-weight:700;min-height:58px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 1px 9px;font-size:11.5px;font-weight:700;min-height:58px}
+.ulist{list-style:none;margin:10px 0 0;padding:0}
+.ulist li{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.22);margin-bottom:6px}
+.ulist .av2{position:relative;flex:none}
+.ulist .dot{position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;border-radius:50%;background:#5bd47a;border:2px solid #06231a}
+.ulist .nm{flex:1;min-width:0}
+.ulist .nm b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ulist .nm small{color:var(--mute);font-size:12px}
+.ulist .st{text-align:right;font-size:12px;color:var(--mute);white-space:nowrap}
+.ulist .st b{color:var(--brass);font-size:15px}
+.ulist li.me{border:1px solid rgba(217,178,90,.45)}
 .tabs button svg{width:24px;height:24px}
 .tabs button.on{color:var(--brass)}
 .chk{display:flex;align-items:center;gap:10px;min-height:48px;font-weight:700}
@@ -201,6 +211,7 @@ details li{color:var(--mute);font-size:14px;margin-bottom:6px}
  <symbol id="ic-user" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0 2c-4 0-8 2-8 5v2h16v-2c0-3-4-5-8-5z"/></symbol>
  <symbol id="ic-list" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h3v3H4zm5 0h11v3H9zM4 10.5h3v3H4zm5 0h11v3H9zM4 16h3v3H4zm5 0h11v3H9z"/></symbol>
  <symbol id="ic-lock" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10V7a5 5 0 0 1 10 0v3h1.5v11h-13V10zm2 0h6V7a3 3 0 0 0-6 0zm3 3.5a1.5 1.5 0 0 0-.8 2.8V18h1.6v-1.7a1.5 1.5 0 0 0-.8-2.8z"/></symbol>
+ <symbol id="ic-users" viewBox="0 0 24 24"><path fill="currentColor" d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm7.5 0a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zM9 13c-3.6 0-7 1.8-7 4.6V20h14v-2.4C16 14.8 12.6 13 9 13zm7.5 0c-.6 0-1.2.1-1.8.2 1.4 1 2.3 2.4 2.3 4.4V20h5v-2.2c0-2.6-2.8-4.8-5.5-4.8z"/></symbol>
  <symbol id="ic-plus" viewBox="0 0 24 24"><path fill="currentColor" d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7z"/></symbol>
  <symbol id="ic-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l12-7.5z"/></symbol>
  <symbol id="ic-bot" viewBox="0 0 24 24"><path fill="currentColor" d="M11 2h2v3h4a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h4zm-2 8a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM8 15v1.5h8V15z"/></symbol>
@@ -211,7 +222,7 @@ details li{color:var(--mute);font-size:14px;margin-bottom:6px}
 
 <section class="scr" id="welcome"><div class="box">
  <div class="logo"><div class="fan" id="logoFan"></div><div><h1>Durak</h1></div></div>
- <p class="lead">Xoş gəldin! Masada görünəcək adını yaz.</p>
+ <p class="lead">Xoş gəldin! Masada görünəcək adını yaz. <b>Ad sonradan dəyişdirilmir</b> və təkrarlanmır.</p>
  <div class="pan"><label class="l" for="wName">Adın</label><input id="wName" maxlength="14" placeholder="Məsələn: Cavid">
   <label class="l">Rəngin</label><div class="colors" id="wColors"></div></div>
  <button class="btn pri" id="wGo">Başla</button><p class="err" id="wErr"></p>
@@ -221,7 +232,7 @@ details li{color:var(--mute);font-size:14px;margin-bottom:6px}
  <header class="apphd"><h2 id="tabTitle">Durak</h2><div class="who" id="who"></div></header>
  <div id="tabBody">
   <div class="pane" id="t-profile">
-   <div class="pan"><div class="prof"><div class="av2" id="pAv"></div><div><b id="pName"></b><small style="color:var(--mute)">Durak oyunçusu</small></div><button id="pEdit">Dəyiş</button></div>
+   <div class="pan"><div class="prof"><div class="av2" id="pAv"></div><div><b id="pName"></b><small style="color:var(--mute)">Durak oyunçusu</small></div></div>
     <div class="stats"><div><b id="sG">0</b><small>Oyun</small></div><div><b id="sW">0</b><small>Qələbə</small></div><div><b id="sD">0</b><small>Durak oldun</small></div></div></div>
    <button class="quick" id="quick"><svg><use href="#ic-play"/></svg>Tez oyun</button>
    <p class="note" style="text-align:center;margin:-6px 0 14px">Filtrinə uyğun açıq masa varsa qoşulur, yoxdursa botlarla başlayır</p>
@@ -234,6 +245,11 @@ details li{color:var(--mute);font-size:14px;margin-bottom:6px}
     <label class="l">Oyun növü</label><div class="multi" data-f="mode"><button data-v="podkidnoy">Podkidnoy</button><button data-v="perevodnoy">Perevodnoy</button></div>
    </details>
    <ul class="tables" id="tables"></ul>
+  </div>
+  <div class="pane" id="t-users">
+   <div class="pan" style="padding:10px"><input id="uSearch" placeholder="Oyunçu axtar…"></div>
+   <p class="note" id="uCount" style="margin:0 4px"></p>
+   <ul class="ulist" id="ulist"></ul>
   </div>
   <div class="pane" id="t-private">
    <div class="pan"><label class="l" for="code">Dostunun verdiyi otaq kodu</label>
@@ -256,7 +272,7 @@ details li{color:var(--mute);font-size:14px;margin-bottom:6px}
    <div class="row"><button class="btn" id="bots">Botlarla oyna</button><button class="btn pri" id="create">Masa yarat</button></div>
   </div>
  </div>
- <nav class="tabs" id="tabs"><button data-t="profile"><svg><use href="#ic-user"/></svg>Profil</button><button data-t="open"><svg><use href="#ic-list"/></svg>Açıq masalar</button><button data-t="private"><svg><use href="#ic-lock"/></svg>Özəl oyun</button><button data-t="create"><svg><use href="#ic-plus"/></svg>Masa yarat</button></nav>
+ <nav class="tabs" id="tabs"><button data-t="profile"><svg><use href="#ic-user"/></svg>Profil</button><button data-t="open"><svg><use href="#ic-list"/></svg>Masalar</button><button data-t="users"><svg><use href="#ic-users"/></svg>Oyunçular</button><button data-t="private"><svg><use href="#ic-lock"/></svg>Özəl</button><button data-t="create"><svg><use href="#ic-plus"/></svg>Yarat</button></nav>
 </section>
 
 <section class="scr" id="lobby"><div class="box">
@@ -513,21 +529,60 @@ function paintProf(){
  $('who').innerHTML=`<span>${esc(prof.name)}</span><div class="av2" style="--c:${prof.color}">${ini(prof.name)}</div>`;
  $('sG').textContent=stats.g;$('sW').textContent=stats.w;$('sD').textContent=stats.d;
 }
-function welcome(edit){
- show('welcome');$('wName').value=prof.name||'';let c=prof.color;
+const uapi=(p,m='GET',b)=>fetch(ROOT+'users'+p+'.json',{method:m,body:b===undefined?undefined:JSON.stringify(b)}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()});
+const NETMSG='Serverə qoşulmaq alınmadı. İnterneti yoxla. Qeyd: Claude-dakı önizləmə pəncərəsində onlayn rejim işləmir — oyunu APK-dan və ya linkdən aç.';
+function newUid(){const a='abcdefghijklmnopqrstuvwxyz0123456789';return'u'+Array.from({length:10},()=>a[Math.random()*a.length|0]).join('')}
+function welcome(){
+ show('welcome');let c=prof.color;
  const paint=()=>$('wColors').innerHTML=COLORS.map(x=>`<button data-c="${x}" class="${x===c?'on':''}" style="--c:${x}" aria-label="Rəng"></button>`).join('');paint();
  $('wColors').onclick=e=>{const b=e.target.closest('button');if(b){c=b.dataset.c;paint()}};
- $('wGo').textContent=edit?'Yadda saxla':'Başla';
- $('wGo').onclick=()=>{const n=$('wName').value.trim();if(!n){$('wErr').textContent='Adını yaz';return}prof={name:n.slice(0,14),color:c};LS.set('dk-prof',prof);openApp('profile')};
+ $('wGo').onclick=async()=>{
+  const n=$('wName').value.trim().replace(/\s+/g,' ');if(n.length<2){$('wErr').textContent='Ad ən azı 2 hərf olmalıdır';return}
+  $('wGo').disabled=true;$('wErr').textContent='Yoxlanılır…';let users=null;
+  try{users=await uapi('')||{}}catch(e){}
+  $('wGo').disabled=false;
+  if(users&&Object.values(users).some(u=>u&&u.name&&u.name.toLowerCase()===n.toLowerCase())){$('wErr').textContent='Bu ad artıq istifadə olunur — başqa ad seç';return}
+  prof={uid:newUid(),name:n.slice(0,14),color:c,reg:false};LS.set('dk-prof',prof);
+  await register();openApp('profile');
+ };
 }
-const TT={profile:'Durak',open:'Açıq masalar',private:'Özəl oyun',create:'Masa yarat'};
+async function register(){
+ if(!prof.uid){prof.uid=newUid();LS.set('dk-prof',prof)}
+ try{await uapi('/'+prof.uid,'PATCH',{name:prof.name,color:prof.color,g:stats.g,w:stats.w,d:stats.d,seen:{'.sv':'timestamp'},...(prof.reg?{}:{created:{'.sv':'timestamp'}})});prof.reg=true;LS.set('dk-prof',prof)}catch(e){}
+}
+function colorPick(){
+ ov(`<h2>Rəngin</h2><p class="note">Adın dəyişdirilmir: <b>${esc(prof.name)}</b></p><div class="colors" id="cp" style="justify-content:center;margin:14px 0"></div><button class="btn" id="cl">Bağla</button>`);
+ const paint=()=>$('cp').innerHTML=COLORS.map(x=>`<button data-c="${x}" class="${x===prof.color?'on':''}" style="--c:${x}" aria-label="Rəng"></button>`).join('');paint();
+ $('cp').onclick=e=>{const b=e.target.closest('button');if(!b)return;prof.color=b.dataset.c;LS.set('dk-prof',prof);paint();paintProf();register()};
+ $('cl').onclick=()=>$('ov').classList.remove('on');
+}
+setInterval(()=>{if(prof.uid&&document.visibilityState==='visible')uapi('/'+prof.uid,'PATCH',{seen:{'.sv':'timestamp'}}).catch(()=>{})},60000);
+/* players list */
+let usersData=null,usersAt=0;
+async function loadUsers(force){
+ if(!force&&usersData&&Date.now()-usersAt<20000)return paintUsers();
+ if(!usersData)$('ulist').innerHTML='<li class="empty" style="display:block">Yüklənir…</li>';
+ try{usersData=await uapi('')||{};usersAt=Date.now()}catch(e){$('ulist').innerHTML=`<li class="empty" style="display:block">${esc(NETMSG)}</li>`;$('uCount').textContent='';return}
+ paintUsers();
+}
+function ago(t){const m=Math.max(0,Math.round((Date.now()-t)/60000));return m<3?'onlayn':m<60?m+' dəq əvvəl':m<1440?Math.round(m/60)+' saat əvvəl':Math.round(m/1440)+' gün əvvəl'}
+function paintUsers(){
+ if(!usersData)return;const q=$('uSearch').value.trim().toLowerCase();
+ const all=Object.entries(usersData).filter(([k,u])=>u&&u.name).map(([k,u])=>({...u,uid:k,on:Date.now()-(u.seen||0)<180000}));
+ const list=all.filter(u=>!q||u.name.toLowerCase().includes(q)).sort((a,b)=>(b.on-a.on)||((b.w||0)-(a.w||0))||((b.seen||0)-(a.seen||0)));
+ $('uCount').textContent=`${all.length} oyunçu · ${all.filter(u=>u.on).length} onlayn`;
+ $('ulist').innerHTML=list.length?list.slice(0,200).map(u=>`<li class="${u.uid===prof.uid?'me':''}"><div class="av2" style="--c:${/^#[0-9a-f]{6}$/i.test(u.color||'')?u.color:'#2f6b55'}">${ini(u.name)}${u.on?'<span class="dot"></span>':''}</div><div class="nm"><b>${esc(u.name)}${u.uid===prof.uid?' (sən)':''}</b><small>${u.on?'<span style="color:#5bd47a">onlayn</span>':esc(ago(u.seen||0))}</small></div><div class="st"><b>${+u.w||0}</b> qələbə<br>${+u.g||0} oyun · ${+u.d||0} durak</div></li>`).join(''):'<li class="empty" style="display:block">Heç kim tapılmadı</li>';
+}
+$('uSearch').oninput=paintUsers;
+const TT={profile:'Durak',open:'Açıq masalar',users:'Oyunçular',private:'Özəl oyun',create:'Masa yarat'};
 let curTab='profile',lobbyES=null,lobbyData={};
-function openApp(tab){show('app');paintProf();tabTo(tab||curTab)}
+function openApp(tab){show('app');paintProf();tabTo(tab||curTab);if(!prof.reg)register();else uapi('/'+prof.uid,'PATCH',{seen:{'.sv':'timestamp'}}).catch(()=>{})}
 function tabTo(t){curTab=t;document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='t-'+t));
  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));$('tabTitle').textContent=TT[t];
+ if(t==='users')loadUsers();
  if(t==='open')watchLobby();else if(lobbyES){lobbyES.close();lobbyES=null}}
 $('tabs').onclick=e=>{const b=e.target.closest('button');if(b)tabTo(b.dataset.t)};
-$('pEdit').onclick=()=>welcome(true);$('tSet').onclick=()=>welcome(true);
+$('tSet').onclick=colorPick;
 $('tBots').onclick=()=>startOffline();
 const RULES=['Hər kəsə 6 kart paylanır, kolodanın altındakı kart kozırı göstərir. Ən kiçik kozırı olan ilk hücum edir.','Kartı barmaqla sürüşdürüb masaya at. Müdafiədə kartı hücum kartının üstünə at: eyni rəngin böyüyü və ya kozır vurur. Kozırı yalnız böyük kozır vurur.','Hücumçu üstündür: o <b>Bitdi</b> basana qədər başqaları kart əlavə edə bilməz. Bitdi basandan sonra digərləri əlavə edir və ya <b>Pas</b> deyir; onların vaxtı ekranda görünür.','Masadakı kartlarla eyni dəyərli kartları əlavə etmək olar. <b>İlk bitəyə qədər masada ən çox 5 kart</b>, sonra 6 kart olur, müdafiəçinin kart sayından çox olmaz.','<b>Qonşular</b> rejimində yalnız müdafiəçinin qonşuları, <b>Hamı</b> rejimində müdafiəçidən başqa hər kəs kart əlavə edir.','<b>Perevodnoy</b>: heç bir kart vurulmayıbsa, eyni dəyərli kartı "Ötür" sahəsinə ataraq hücumu növbəti rəqibə ötür.','Komanda rejimində yalnız hücum edən komanda kart əlavə edir; hücumçu bir dəfə hücumu yoldaşına verə bilər.','Kolodda kart bitəndən sonra kartları qurtaran çıxır. Sonuncu qalan <b>durak</b> olur.'];
 $('tRules').onclick=()=>{ov(`<h2>Qaydalar</h2><ul class="res">${RULES.map(r=>`<li style="display:block">${r}</li>`).join('')}</ul><button class="btn" id="cl">Bağla</button>`);$('cl').onclick=()=>$('ov').classList.remove('on')};
@@ -544,7 +599,7 @@ function watchLobby(){
  if(!lobbyES){$('tables').innerHTML='<li class="empty" style="display:block">Serverə qoşulmaq alınmadı</li>';return}
  const on=async e=>{const {path,data}=JSON.parse(e.data);if(path==='/')lobbyData=data||{};else{try{lobbyData=await fetch(ROOT+'lobby.json').then(r=>r.json())||{}}catch(x){}}paintTables()};
  lobbyES.addEventListener('put',on);lobbyES.addEventListener('patch',on);
- lobbyES.onerror=()=>{if(!Object.keys(lobbyData||{}).length&&curTab==='open')$('tables').innerHTML='<li class="empty" style="display:block">Serverə qoşulmaq alınmadı. İnterneti yoxla.</li>'};
+ lobbyES.onerror=()=>{if(!Object.keys(lobbyData||{}).length&&curTab==='open')$('tables').innerHTML=`<li class="empty" style="display:block">${esc(NETMSG)}</li>`};
 }
 function paintTables(){
  if(curTab!=='open')return;const list=matching();
@@ -599,7 +654,7 @@ function startOffline(){
 }
 async function createRoom(){
  const n=getName();$('create').disabled=true;code=genCode();
- try{if(await api(code+'/state')){$('create').disabled=false;return createRoom()}}catch(e){$('create').disabled=false;toastApp('İnternet bağlantısını yoxla');return}
+ try{if(await api(code+'/state')){$('create').disabled=false;return createRoom()}}catch(e){$('create').disabled=false;toastApp(NETMSG);return}
  $('create').disabled=false;if(lobbyES){lobbyES.close();lobbyES=null}
  stopAll();mode='host';myId='H'+Math.random().toString(36).slice(2,8);G=null;lastEvn=-1;
  L={game:'durak',phase:'lobby',code,st:stObj(),max:+set.n,priv:$('priv').checked,players:[{id:myId,name:n}]};publish();
@@ -627,7 +682,7 @@ async function joinRoom(cc){
  const n=getName();const c=(cc||$('code').value).trim().toUpperCase();const errT=m=>{$('err').textContent=m;if(cc)toastApp(m)};
  if(!/^[A-Z]{4}$/.test(c)){errT('4 hərfli kodu yaz');return}
  $('err').textContent='Qoşulur…';let st;
- try{st=await api(c+'/state')}catch(e){errT('İnternet bağlantısını yoxla');return}
+ try{st=await api(c+'/state')}catch(e){errT(NETMSG);return}
  if(!st||st.game!=='durak'){errT('Bu kodla Durak masası tapılmadı');return}
  if(st.phase!=='lobby'){errT('Oyun artıq başlayıb');return}
  if((st.players||[]).length>=Math.min(st.max||6,E.MAXP[st.st.deck])){errT('Masa doludur');return}
@@ -869,7 +924,7 @@ $('acts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)
 let counted=-1;
 function showResult(){
  const r=V.result||{};let h='';
- if(counted!==V.v){counted=V.v;const mi=myIdx(),me=V.players[mi];const lost=r.teams?me&&me.team===r.loser:r.loser===mi;stats.g++;if(lost)stats.d++;else stats.w++;LS.set('dk-stats',stats)}
+ if(counted!==V.v){counted=V.v;const mi=myIdx(),me=V.players[mi];const lost=r.teams?me&&me.team===r.loser:r.loser===mi;stats.g++;if(lost)stats.d++;else stats.w++;LS.set('dk-stats',stats);if(prof.uid)uapi('/'+prof.uid,'PATCH',{g:stats.g,w:stats.w,d:stats.d,seen:{'.sv':'timestamp'}}).catch(()=>{})}
  if(r.teams){h=`<h2>${r.loser>=0?`Komanda ${TN[r.loser]} uduzdu`:'Heç-heçə'}</h2><ul class="res">${(r.order||[]).map((t,i)=>`<li><span>${i+1}-ci yer</span><b style="color:${TC[t]}">Komanda ${TN[t]}</b></li>`).join('')}${r.loser>=0?`<li><span>Sonuncu</span><b style="color:${TC[r.loser]}">Komanda ${TN[r.loser]}</b></li>`:''}</ul>`}
  else{const d=r.loser>=0?V.players[r.loser]:null;h=`<h2>${d?(d.id===myId?'Sən durak oldun!':`Durak: ${esc(d.name)}`):'Heç-heçə'}</h2><ul class="res">${(r.order||[]).map((j,i)=>`<li><span>${i+1}-ci yer</span><b>${esc(V.players[j].name)}</b></li>`).join('')}${d?`<li><span>Durak</span><b style="color:#ff9b8f">${esc(d.name)}</b></li>`:''}</ul>`}
  h+=mode==='guest'?'<p class="note">Otağı yaradan yeni oyun başlada bilər.</p>':'<button class="btn pri" id="again">Yenidən oyna</button><div style="height:8px"></div>';
@@ -882,9 +937,9 @@ function showResult(){
 function ov(h){$('ovBox').innerHTML=h;$('ov').classList.add('on')}
 $('menuBtn').onclick=()=>{ov('<h2>Menyu</h2><p class="note">Oyundan çıxmaq istəyirsən?</p><div style="height:10px"></div><button class="btn pri" id="quit">Bəli, çıx</button><div style="height:8px"></div><button class="btn" id="stay">Oyuna qayıt</button>');$('stay').onclick=()=>$('ov').classList.remove('on');$('quit').onclick=()=>{if(mode==='host'){api(code,'DELETE').catch(()=>{});lapi(code,'DELETE').catch(()=>{})}setTimeout(()=>location.reload(),150)}};
 $('logBtn').onclick=()=>{ov(`<h2>Son gedişlər</h2><ul class="res">${(V&&V.log||[]).slice().reverse().map(l=>`<li>${esc(l)}</li>`).join('')}</ul><button class="btn" id="cl">Bağla</button>`);$('cl').onclick=()=>$('ov').classList.remove('on')};
-function toastApp(m){ov(`<h2 style="font-size:22px">${esc(m)}</h2><button class="btn" id="cl">Bağla</button>`);$('cl').onclick=()=>$('ov').classList.remove('on')}
+function toastApp(m){ov(`<h2 style="font-size:20px;line-height:1.3">${esc(m)}</h2><button class="btn" id="cl">Bağla</button>`);$('cl').onclick=()=>$('ov').classList.remove('on')}
 $('bots').onclick=()=>startOffline();$('create').onclick=createRoom;$('join').onclick=()=>joinRoom();
-if(prof.name)openApp('profile');else welcome(false);
+if(prof.name){if(!prof.uid){prof.uid=newUid();prof.reg=false;LS.set('dk-prof',prof)}openApp('profile')}else welcome();
 addEventListener('resize',()=>V&&render());
 }
 </script>
